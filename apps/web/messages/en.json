@@ -1,0 +1,22 @@
+{
+  "Metadata": {
+    "title": "Battery Manufacturing Quality & Traceability System",
+    "description": "A synthetic portfolio application for battery manufacturing quality and traceability workflows."
+  },
+  "HomePage": {
+    "phase": "Phase 1F · Full-Stack Integration Foundation",
+    "title": "Battery Manufacturing Quality & Traceability System",
+    "description": "The modern frontend foundation is being prepared for multilingual Project 2 workflows."
+  },
+  "LanguageSwitcher": {
+    "label": "Language"
+  },
+  "ApiStatus": {
+    "title": "API connection",
+    "checking": "Checking the backend service…",
+    "connected": "Backend service connected",
+    "unavailable": "Backend service unavailable",
+    "checkingAction": "Checking…",
+    "checkAgain": "Check again"
+  }
+}

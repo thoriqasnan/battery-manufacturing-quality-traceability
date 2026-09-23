@@ -15,19 +15,101 @@ This roadmap is the source of truth for implementation sequence and phase status
 
 ## Phase 1 — Modern Full-Stack Foundation
 
-**Status: NEXT / NOT STARTED**
+**Status: VERIFIED COMPLETE**
 
-- Next.js, React, and TypeScript foundation
-- NestJS foundation
-- PostgreSQL development foundation
-- Basic project structure
-- i18n-ready frontend architecture with English as the canonical language
+### Phase 1A — Frontend Foundation
 
-Phase 1 will evaluate and select a maintained Next.js-compatible i18n solution for the actual framework version and architecture. It does not require complete translations for all planned locales.
+**Status: VERIFIED COMPLETE**
+
+- Next.js 16.3.5 with React 19.2.8
+- TypeScript 5 and Tailwind CSS 4 foundation
+- App Router and ESLint
+- Minimal responsive Project 2 foundation page
+- Automated lint, TypeScript, and production build validation completed
+
+Final manual acceptance confirmed successful desktop and 375×812 mobile rendering with no observed horizontal overflow.
+
+### Phase 1B — Backend Foundation
+
+**Status: VERIFIED COMPLETE**
+
+- NestJS 12 and TypeScript 6 REST API foundation
+- Standard controller and service dependency-injection flow
+- Stable `GET /health` endpoint without database dependencies
+- Focused unit and E2E coverage
+- Automated lint, TypeScript, test, E2E, and production build validation completed
+
+Final manual acceptance confirmed that NestJS starts on port 3001 and `GET /health` returns HTTP 200 with the exact expected JSON response.
+
+### Phase 1C — PostgreSQL Development Foundation
+
+**Status: VERIFIED COMPLETE**
+
+- PostgreSQL selected as the development relational database
+- Safe `DATABASE_URL` convention and trackable `.env.example` established
+- Local database setup and non-destructive verification steps documented
+- No ORM, driver, schema, migration, seed, or application connection introduced
+
+Final manual acceptance confirmed PostgreSQL 17.11 running on `localhost:5432`, the project-specific role and development database, and a successful connection reporting the expected database and user. Private credentials remain in the ignored local environment file.
+
+### Phase 1D — Prisma Data-Access Foundation
+
+**Status: VERIFIED COMPLETE**
+
+- Stable Prisma 7 PostgreSQL tooling and driver adapter installed
+- Minimal PostgreSQL datasource and ESM client-generation configuration
+- Lazy NestJS `PrismaModule` and `PrismaService` foundation
+- No domain models, migrations, seeds, repositories, queries, or database-backed endpoints
+- Prisma validation and generation, API lint, TypeScript, unit tests, E2E health test, and production build completed
+
+Final manual acceptance confirmed live Prisma connectivity with `npx prisma db execute --stdin` and the non-domain query `SELECT 1;`. Physical relational and manufacturing modeling remains deferred to Phase 2.
+
+### Phase 1E — Frontend Internationalization Foundation
+
+**Status: VERIFIED COMPLETE**
+
+- `next-intl` 4.14.5 integrated with the Next.js App Router
+- Central registry for `en`, `zh-CN`, `de`, `ko`, `ja`, `ar`, `id`, and `hi`
+- Canonical/default/fallback English policy and locale-prefixed routing
+- Complete foundation-page messages for English and Bahasa Indonesia
+- Accessible locale switcher with cookie persistence
+- Locale-derived document language and Arabic RTL direction
+- Frontend lint, TypeScript, production build, and static locale-output checks completed
+
+Final manual acceptance confirmed English default rendering, Bahasa Indonesia switching and rendering, locale persistence across refresh, and English fallback with RTL layout for Arabic.
+
+### Phase 1F — Frontend/Backend Integration Foundation
+
+**Status: VERIFIED COMPLETE**
+
+- Central `NEXT_PUBLIC_API_BASE_URL` frontend environment contract
+- Small native-fetch health API boundary with response validation
+- Localized checking, connected, unavailable, and recheck UI states
+- Restricted NestJS CORS for the configured frontend origin
+- Existing database-independent `GET /health` contract preserved
+- Frontend and backend lint, TypeScript, tests where applicable, and production builds completed
+
+Final manual acceptance confirmed the browser-to-Next.js-to-NestJS health path with development CORS restricted to `http://localhost:3000`. The unavailable-backend state rendered without a frontend crash, and Check again recovered to connected after the backend restarted without a page refresh.
+
+### Final Phase 1 manual acceptance
+
+**Status: PASSED**
+
+The final acceptance session verified:
+
+- Frontend: Next.js starts, the foundation page renders on desktop and mobile, and there is no unintended horizontal overflow.
+- Internationalization: English and Bahasa Indonesia render, switching persists across reload/navigation, an untranslated locale falls back to English, and Arabic applies RTL direction.
+- Backend: NestJS starts and `GET /health` returns HTTP 200 with `{ "status": "ok", "service": "api" }`.
+- Full-stack integration: a valid response produces connected state, an unavailable backend produces unavailable state without a frontend crash, and recheck recovers after the backend starts without a page refresh.
+- PostgreSQL: local tooling/server availability and connections on `localhost:5432` are confirmed; the project-specific development database and role use private local credentials; the connection reports the expected database and user.
+- Prisma: a safe, non-domain connection succeeds with the local `DATABASE_URL` without creating Phase 2 tables.
+- Repository security: real environment files remain ignored, example files remain trackable, and no credentials enter Git.
+
+Phase 1A through Phase 1F and Phase 1 are **VERIFIED COMPLETE**. Phase 2 is next and has **NOT STARTED**.
 
 ## Phase 2 — Database & Synthetic Manufacturing Model
 
-**Status: PLANNED**
+**Status: NEXT / NOT STARTED**
 
 - Physical schema design and relational constraints
 - Migrations

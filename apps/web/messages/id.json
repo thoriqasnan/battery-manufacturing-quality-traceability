@@ -1,0 +1,22 @@
+{
+  "Metadata": {
+    "title": "Sistem Mutu & Ketertelusuran Manufaktur Baterai",
+    "description": "Aplikasi portofolio sintetis untuk alur kerja mutu dan ketertelusuran manufaktur baterai."
+  },
+  "HomePage": {
+    "phase": "Fase 1F · Fondasi Integrasi Full-Stack",
+    "title": "Sistem Mutu & Ketertelusuran Manufaktur Baterai",
+    "description": "Fondasi frontend modern sedang disiapkan untuk alur kerja multibahasa Project 2."
+  },
+  "LanguageSwitcher": {
+    "label": "Bahasa"
+  },
+  "ApiStatus": {
+    "title": "Koneksi API",
+    "checking": "Memeriksa layanan backend…",
+    "connected": "Layanan backend terhubung",
+    "unavailable": "Layanan backend tidak tersedia",
+    "checkingAction": "Memeriksa…",
+    "checkAgain": "Periksa lagi"
+  }
+}

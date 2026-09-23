@@ -17,9 +17,11 @@ An independent public portfolio application that will simulate battery-manufactu
 | 0E Domain/Data Architecture | VALIDATED |
 | 0F Technical Architecture | VALIDATED |
 
-**Next:** Phase 1 — Modern Full-Stack Foundation (**NOT STARTED**).
+**Status:** Phase 1 — Modern Full-Stack Foundation (**VERIFIED COMPLETE**).
 
-This repository currently contains architecture and product documentation only. No application has been scaffolded or implemented.
+Phase 1A through Phase 1F are **VERIFIED COMPLETE**. Automated regression and final manual acceptance passed for the frontend, backend, local PostgreSQL and Prisma connectivity, internationalization and RTL behavior, responsive layout, full-stack health integration, unavailable-backend handling, and recovery without a page refresh.
+
+**Next:** Phase 2 — Database & Synthetic Manufacturing Model (**NOT STARTED**).
 
 ## Planned MVP
 
@@ -37,13 +39,13 @@ Internationalization, security, responsive design, testing, and production readi
 
 ## Planned technology direction
 
-- Frontend: Next.js, React, TypeScript, Tailwind CSS
-- Backend: NestJS, TypeScript, REST API
-- Data access: Prisma
-- Database: PostgreSQL
-- Repository: a simple monorepo, eventually containing `apps/web` and `apps/api`
+- Frontend: Next.js, React, TypeScript, Tailwind CSS, next-intl — Phase 1A and 1E foundations implemented
+- Backend and integration: NestJS, TypeScript, REST API, restricted development CORS, and a frontend health client — Phase 1B and 1F foundations implemented
+- Data access: Prisma — Phase 1D tooling and lazy NestJS provider implemented
+- Database: PostgreSQL — Phase 1C development configuration contract established
+- Repository: a simple monorepo containing `apps/web` and `apps/api`
 
-These technologies are validated architectural decisions, but none has been scaffolded in this repository yet.
+Only the minimal frontend, internationalization, backend, browser-to-health integration, PostgreSQL development configuration, and Prisma data-access foundations exist. Local PostgreSQL and Prisma connectivity have been verified, but no physical domain schema, migration, seed, or data-backed application behavior has been implemented.
 
 ## Scope boundaries
 

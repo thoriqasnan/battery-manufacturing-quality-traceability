@@ -66,6 +66,7 @@ next-env.d.ts
 
 # Prisma generated cache and local development databases
 node_modules/.prisma/
+apps/api/src/generated/prisma/
 prisma/*.db
 prisma/*.db-journal
 prisma/*.sqlite
