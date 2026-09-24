@@ -19,6 +19,10 @@
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
+    "test:traceability": "vitest run --config ./vitest.config.traceability.ts",
+    "traceability:evidence": "tsc --incremental false && node dist/scripts/traceability-evidence.js",
+    "phase2:verify": "prisma format && npm run prisma:validate && npm run prisma:generate && prisma migrate status && prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code && tsc --noEmit && npm run lint && npm run test && npm run test:traceability && npm run test:e2e && npm run build && git diff --check",
+    "db:seed": "npm run prisma:generate && tsc --incremental false && node prisma/seed.mjs",
     "prisma:validate": "prisma validate",
     "prisma:generate": "prisma generate"
   },

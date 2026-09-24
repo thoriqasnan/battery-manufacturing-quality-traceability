@@ -8,20 +8,22 @@ An independent public portfolio application that will simulate battery-manufactu
 
 **Phase 0 — Discovery & Architecture: COMPLETE**
 
-| Phase 0 decision area | Status |
-| --- | --- |
-| 0A Manufacturing Domain Map | VALIDATED |
-| 0B Product Definition | VALIDATED |
+| Phase 0 decision area        | Status    |
+| ---------------------------- | --------- |
+| 0A Manufacturing Domain Map  | VALIDATED |
+| 0B Product Definition        | VALIDATED |
 | 0C Public/Synthetic Boundary | VALIDATED |
-| 0D MVP & Feature Map | VALIDATED |
-| 0E Domain/Data Architecture | VALIDATED |
-| 0F Technical Architecture | VALIDATED |
+| 0D MVP & Feature Map         | VALIDATED |
+| 0E Domain/Data Architecture  | VALIDATED |
+| 0F Technical Architecture    | VALIDATED |
 
-**Status:** Phase 1 — Modern Full-Stack Foundation (**VERIFIED COMPLETE**).
+**Status:** Phase 2 — Database & Synthetic Manufacturing Model (**VERIFIED COMPLETE**).
 
 Phase 1A through Phase 1F are **VERIFIED COMPLETE**. Automated regression and final manual acceptance passed for the frontend, backend, local PostgreSQL and Prisma connectivity, internationalization and RTL behavior, responsive layout, full-stack health integration, unavailable-backend handling, and recovery without a page refresh.
 
-**Next:** Phase 2 — Database & Synthetic Manufacturing Model (**NOT STARTED**).
+Phase 2A through Phase 2H are **VERIFIED COMPLETE**. The final manual acceptance confirmed the five applied migrations with no drift, deterministic idempotent seeding, forward/reverse and current/historical traceability, replacement/process/quality/nonconformance histories, all nine integrity checks, 10 focused traceability tests, and the complete Phase 2 regression.
+
+**Next:** Phase 3 — Authentication & RBAC (**NOT STARTED**).
 
 ## Planned MVP
 
@@ -45,7 +47,7 @@ Internationalization, security, responsive design, testing, and production readi
 - Database: PostgreSQL — Phase 1C development configuration contract established
 - Repository: a simple monorepo containing `apps/web` and `apps/api`
 
-Only the minimal frontend, internationalization, backend, browser-to-health integration, PostgreSQL development configuration, and Prisma data-access foundations exist. Local PostgreSQL and Prisma connectivity have been verified, but no physical domain schema, migration, seed, or data-backed application behavior has been implemented.
+The repository now includes the Phase 2A–2E relational model, a small deterministic Phase 2F synthetic dataset, and reusable internal Phase 2G traceability queries and integrity validation. It still has no public database-backed API or feature UI.
 
 ## Scope boundaries
 

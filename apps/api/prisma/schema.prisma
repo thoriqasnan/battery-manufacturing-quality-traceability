@@ -7,3 +7,391 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum ExecutionMethod {
+  MANUAL
+  AUTOMATED
+  HYBRID
+}
+
+enum TraceableUnitType {
+  PACK
+  MODULE
+  CELL
+  COMPONENT
+  MATERIAL
+}
+
+enum ProcessExecutionStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABORTED
+}
+
+enum InspectionResultType {
+  NUMERIC
+  BOOLEAN
+  CATEGORICAL
+  VISUAL
+  TEXT
+}
+
+enum InspectionOutcome {
+  PASS
+  NG
+}
+
+enum NonconformanceStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum ActionType {
+  CORRECTION
+  REWORK
+  REPLACEMENT
+  RETEST
+  BALANCING
+  ESCALATION
+}
+
+enum DispositionType {
+  CONTINUE
+  CONCESSION
+  RETURN_IQC
+  SCRAP
+}
+
+model ProductModel {
+  id          String          @id @default(uuid()) @db.Uuid
+  code        String          @unique @db.VarChar(64)
+  name        String          @db.VarChar(160)
+  description String?
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime        @updatedAt @db.Timestamptz(3)
+  routes      ProcessRoute[]
+  packs       TraceableUnit[]
+}
+
+model ProcessDefinition {
+  id                       String                    @id @default(uuid()) @db.Uuid
+  code                     String                    @unique @db.VarChar(64)
+  name                     String                    @db.VarChar(160)
+  description              String?
+  isActive                 Boolean                   @default(true)
+  createdAt                DateTime                  @default(now()) @db.Timestamptz(3)
+  updatedAt                DateTime                  @updatedAt @db.Timestamptz(3)
+  routeSteps               ProcessRouteStep[]
+  executions               ProcessExecution[]
+  inspectionSpecifications InspectionSpecification[]
+}
+
+model ProcessRoute {
+  id             String             @id @default(uuid()) @db.Uuid
+  productModelId String             @db.Uuid
+  code           String             @db.VarChar(64)
+  name           String             @db.VarChar(160)
+  description    String?
+  version        Int                @default(1)
+  isActive       Boolean            @default(true)
+  createdAt      DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime           @updatedAt @db.Timestamptz(3)
+  productModel   ProductModel       @relation(fields: [productModelId], references: [id], onDelete: Restrict)
+  steps          ProcessRouteStep[]
+
+  @@unique([productModelId, code, version])
+  @@index([productModelId, isActive])
+}
+
+model ProcessRouteStep {
+  id                       String                    @id @default(uuid()) @db.Uuid
+  processRouteId           String                    @db.Uuid
+  processDefinitionId      String                    @db.Uuid
+  stepOrder                Int
+  executionMethod          ExecutionMethod
+  createdAt                DateTime                  @default(now()) @db.Timestamptz(3)
+  updatedAt                DateTime                  @updatedAt @db.Timestamptz(3)
+  processRoute             ProcessRoute              @relation(fields: [processRouteId], references: [id], onDelete: Cascade)
+  processDefinition        ProcessDefinition         @relation(fields: [processDefinitionId], references: [id], onDelete: Restrict)
+  executions               ProcessExecution[]
+  inspectionSpecifications InspectionSpecification[]
+
+  @@unique([processRouteId, stepOrder])
+  @@unique([id, processDefinitionId])
+  @@index([processDefinitionId])
+}
+
+model TraceableUnit {
+  id              String              @id @default(uuid()) @db.Uuid
+  traceCode       String              @unique @db.VarChar(128)
+  unitType        TraceableUnitType
+  productModelId  String?             @db.Uuid
+  createdAt       DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime            @updatedAt @db.Timestamptz(3)
+  productModel    ProductModel?       @relation(fields: [productModelId], references: [id], onDelete: Restrict)
+  parentRelations GenealogyRelation[] @relation("GenealogyParent")
+  childRelations  GenealogyRelation[] @relation("GenealogyChild")
+  executions      ProcessExecution[]
+  inspections     Inspection[]
+  nonconformances Nonconformance[]
+  relatedActions  ActionHistory[]     @relation("ActionRelatedUnit")
+
+  @@unique([id, unitType])
+  @@index([unitType])
+  @@index([productModelId])
+}
+
+model GenealogyRelation {
+  id           String        @id @default(uuid()) @db.Uuid
+  parentUnitId String        @db.Uuid
+  childUnitId  String        @db.Uuid
+  positionCode String?       @db.VarChar(64)
+  installedAt  DateTime      @db.Timestamptz(3)
+  removedAt    DateTime?     @db.Timestamptz(3)
+  createdAt    DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime      @updatedAt @db.Timestamptz(3)
+  parentUnit   TraceableUnit @relation("GenealogyParent", fields: [parentUnitId], references: [id], onDelete: Restrict)
+  childUnit    TraceableUnit @relation("GenealogyChild", fields: [childUnitId], references: [id], onDelete: Restrict)
+
+  @@unique([parentUnitId, childUnitId, installedAt])
+  @@index([parentUnitId, installedAt])
+  @@index([childUnitId, installedAt])
+}
+
+model ProcessExecution {
+  id                    String                 @id @default(uuid()) @db.Uuid
+  traceableUnitId       String                 @db.Uuid
+  processDefinitionId   String                 @db.Uuid
+  processRouteStepId    String?                @db.Uuid
+  attemptNumber         Int
+  status                ProcessExecutionStatus
+  executionMethod       ExecutionMethod
+  startedAt             DateTime               @db.Timestamptz(3)
+  finishedAt            DateTime?              @db.Timestamptz(3)
+  createdAt             DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime               @updatedAt @db.Timestamptz(3)
+  traceableUnit         TraceableUnit          @relation(fields: [traceableUnitId], references: [id], onDelete: Restrict)
+  processDefinition     ProcessDefinition      @relation(fields: [processDefinitionId], references: [id], onDelete: Restrict)
+  processRouteStep      ProcessRouteStep?      @relation(fields: [processRouteStepId, processDefinitionId], references: [id, processDefinitionId], onDelete: Restrict)
+  inspections           Inspection[]
+  sourceNonconformances Nonconformance[]       @relation("NonconformanceSourceExecution")
+
+  @@unique([id, traceableUnitId])
+  @@unique([id, traceableUnitId, processDefinitionId])
+  @@unique([traceableUnitId, processDefinitionId, attemptNumber])
+  @@index([traceableUnitId, startedAt])
+  @@index([processDefinitionId, startedAt])
+  @@index([processRouteStepId, startedAt])
+  @@index([status, startedAt])
+}
+
+model InspectionSpecification {
+  id                   String                          @id @default(uuid()) @db.Uuid
+  code                 String                          @db.VarChar(64)
+  version              Int
+  name                 String                          @db.VarChar(160)
+  description          String?
+  resultType           InspectionResultType
+  targetUnitType       TraceableUnitType
+  processDefinitionId  String                          @db.Uuid
+  processRouteStepId   String?                         @db.Uuid
+  lowerBound           Decimal?                        @db.Decimal(18, 6)
+  upperBound           Decimal?                        @db.Decimal(18, 6)
+  unitCode             String?                         @db.VarChar(32)
+  expectedBooleanValue Boolean?
+  isActive             Boolean                         @default(true)
+  createdAt            DateTime                        @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime                        @updatedAt @db.Timestamptz(3)
+  processDefinition    ProcessDefinition               @relation(fields: [processDefinitionId], references: [id], onDelete: Restrict)
+  processRouteStep     ProcessRouteStep?               @relation(fields: [processRouteStepId, processDefinitionId], references: [id, processDefinitionId], onDelete: Restrict)
+  options              InspectionSpecificationOption[]
+  inspections          Inspection[]
+
+  @@unique([code, version])
+  @@unique([id, resultType])
+  @@unique([id, resultType, targetUnitType])
+  @@unique([id, resultType, targetUnitType, processDefinitionId])
+  @@index([processDefinitionId, isActive])
+  @@index([processRouteStepId, isActive])
+}
+
+model InspectionSpecificationOption {
+  id              String                  @id @default(uuid()) @db.Uuid
+  specificationId String                  @db.Uuid
+  resultType      InspectionResultType
+  code            String                  @db.VarChar(64)
+  description     String?
+  isAcceptable    Boolean
+  createdAt       DateTime                @default(now()) @db.Timestamptz(3)
+  specification   InspectionSpecification @relation(fields: [specificationId, resultType], references: [id, resultType], onDelete: Restrict)
+  results         InspectionResult[]
+
+  @@unique([specificationId, code])
+  @@unique([id, specificationId, resultType])
+  @@index([specificationId, isAcceptable])
+}
+
+model Inspection {
+  id                    String                  @id @default(uuid()) @db.Uuid
+  traceableUnitId       String                  @db.Uuid
+  specificationId       String                  @db.Uuid
+  processDefinitionId   String                  @db.Uuid
+  processExecutionId    String?                 @db.Uuid
+  resultType            InspectionResultType
+  targetUnitType        TraceableUnitType
+  attemptNumber         Int
+  outcome               InspectionOutcome
+  inspectedAt           DateTime                @db.Timestamptz(3)
+  createdAt             DateTime                @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime                @updatedAt @db.Timestamptz(3)
+  traceableUnit         TraceableUnit           @relation(fields: [traceableUnitId, targetUnitType], references: [id, unitType], onDelete: Restrict)
+  specification         InspectionSpecification @relation(fields: [specificationId, resultType, targetUnitType, processDefinitionId], references: [id, resultType, targetUnitType, processDefinitionId], onDelete: Restrict)
+  processExecution      ProcessExecution?       @relation(fields: [processExecutionId, traceableUnitId, processDefinitionId], references: [id, traceableUnitId, processDefinitionId], onDelete: Restrict)
+  result                InspectionResult?
+  sourceNonconformances Nonconformance[]        @relation("NonconformanceSourceInspection")
+  actionResults         ActionHistory[]         @relation("ActionResultInspection")
+  verifications         Verification[]          @relation("VerificationInspection")
+
+  @@unique([id, traceableUnitId])
+  @@unique([traceableUnitId, specificationId, attemptNumber])
+  @@unique([id, specificationId, resultType])
+  @@index([traceableUnitId, inspectedAt])
+  @@index([specificationId, inspectedAt])
+  @@index([processExecutionId, inspectedAt])
+  @@index([outcome, inspectedAt])
+}
+
+model InspectionResult {
+  id              String                         @id @default(uuid()) @db.Uuid
+  inspectionId    String                         @unique @db.Uuid
+  specificationId String                         @db.Uuid
+  resultType      InspectionResultType
+  numericValue    Decimal?                       @db.Decimal(18, 6)
+  booleanValue    Boolean?
+  optionId        String?                        @db.Uuid
+  textValue       String?
+  createdAt       DateTime                       @default(now()) @db.Timestamptz(3)
+  inspection      Inspection                     @relation(fields: [inspectionId, specificationId, resultType], references: [id, specificationId, resultType], onDelete: Restrict)
+  selectedOption  InspectionSpecificationOption? @relation(fields: [optionId, specificationId, resultType], references: [id, specificationId, resultType], onDelete: Restrict)
+
+  @@unique([inspectionId, specificationId, resultType])
+  @@index([specificationId])
+  @@index([optionId])
+}
+
+model DefectCategory {
+  id              String           @id @default(uuid()) @db.Uuid
+  code            String           @unique @db.VarChar(64)
+  name            String           @db.VarChar(160)
+  description     String?
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime         @updatedAt @db.Timestamptz(3)
+  nonconformances Nonconformance[]
+}
+
+model Nonconformance {
+  id                       String               @id @default(uuid()) @db.Uuid
+  code                     String               @unique @db.VarChar(64)
+  traceableUnitId          String               @db.Uuid
+  defectCategoryId         String               @db.Uuid
+  sourceInspectionId       String?              @db.Uuid
+  sourceProcessExecutionId String?              @db.Uuid
+  status                   NonconformanceStatus @default(OPEN)
+  description              String?
+  detectedAt               DateTime             @db.Timestamptz(3)
+  resolvedAt               DateTime?            @db.Timestamptz(3)
+  closedAt                 DateTime?            @db.Timestamptz(3)
+  createdAt                DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt                DateTime             @updatedAt @db.Timestamptz(3)
+  traceableUnit            TraceableUnit        @relation(fields: [traceableUnitId], references: [id], onDelete: Restrict)
+  defectCategory           DefectCategory       @relation(fields: [defectCategoryId], references: [id], onDelete: Restrict)
+  sourceInspection         Inspection?          @relation("NonconformanceSourceInspection", fields: [sourceInspectionId, traceableUnitId], references: [id, traceableUnitId], onDelete: Restrict)
+  sourceProcessExecution   ProcessExecution?    @relation("NonconformanceSourceExecution", fields: [sourceProcessExecutionId, traceableUnitId], references: [id, traceableUnitId], onDelete: Restrict)
+  abnormalCases            AbnormalCase[]
+  actions                  ActionHistory[]
+  verifications            Verification[]
+  dispositions             DispositionHistory[]
+
+  @@unique([id, traceableUnitId])
+  @@index([traceableUnitId, detectedAt])
+  @@index([status, detectedAt])
+  @@index([defectCategoryId, detectedAt])
+  @@index([sourceInspectionId])
+  @@index([sourceProcessExecutionId])
+}
+
+model AbnormalCase {
+  id               String          @id @default(uuid()) @db.Uuid
+  nonconformanceId String          @db.Uuid
+  code             String          @unique @db.VarChar(64)
+  reason           String?
+  openedAt         DateTime        @db.Timestamptz(3)
+  closedAt         DateTime?       @db.Timestamptz(3)
+  createdAt        DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime        @updatedAt @db.Timestamptz(3)
+  nonconformance   Nonconformance  @relation(fields: [nonconformanceId], references: [id], onDelete: Restrict)
+  actions          ActionHistory[]
+
+  @@unique([id, nonconformanceId])
+  @@index([nonconformanceId, openedAt])
+}
+
+model ActionHistory {
+  id                    String         @id @default(uuid()) @db.Uuid
+  nonconformanceId      String         @db.Uuid
+  traceableUnitId       String         @db.Uuid
+  abnormalCaseId        String?        @db.Uuid
+  resultingInspectionId String?        @db.Uuid
+  relatedUnitId         String?        @db.Uuid
+  actionType            ActionType
+  note                  String?
+  occurredAt            DateTime       @db.Timestamptz(3)
+  createdAt             DateTime       @default(now()) @db.Timestamptz(3)
+  nonconformance        Nonconformance @relation(fields: [nonconformanceId, traceableUnitId], references: [id, traceableUnitId], onDelete: Restrict)
+  abnormalCase          AbnormalCase?  @relation(fields: [abnormalCaseId, nonconformanceId], references: [id, nonconformanceId], onDelete: Restrict)
+  resultingInspection   Inspection?    @relation("ActionResultInspection", fields: [resultingInspectionId, traceableUnitId], references: [id, traceableUnitId], onDelete: Restrict)
+  relatedUnit           TraceableUnit? @relation("ActionRelatedUnit", fields: [relatedUnitId], references: [id], onDelete: Restrict)
+  verifications         Verification[]
+
+  @@unique([id, nonconformanceId, traceableUnitId])
+  @@index([nonconformanceId, occurredAt])
+  @@index([abnormalCaseId, occurredAt])
+  @@index([resultingInspectionId])
+  @@index([relatedUnitId])
+}
+
+model Verification {
+  id               String         @id @default(uuid()) @db.Uuid
+  nonconformanceId String         @db.Uuid
+  traceableUnitId  String         @db.Uuid
+  actionHistoryId  String?        @db.Uuid
+  inspectionId     String         @db.Uuid
+  note             String?
+  verifiedAt       DateTime       @db.Timestamptz(3)
+  createdAt        DateTime       @default(now()) @db.Timestamptz(3)
+  nonconformance   Nonconformance @relation(fields: [nonconformanceId, traceableUnitId], references: [id, traceableUnitId], onDelete: Restrict)
+  actionHistory    ActionHistory? @relation(fields: [actionHistoryId, nonconformanceId, traceableUnitId], references: [id, nonconformanceId, traceableUnitId], onDelete: Restrict)
+  inspection       Inspection     @relation("VerificationInspection", fields: [inspectionId, traceableUnitId], references: [id, traceableUnitId], onDelete: Restrict)
+
+  @@unique([nonconformanceId, inspectionId])
+  @@index([nonconformanceId, verifiedAt])
+  @@index([actionHistoryId])
+  @@index([inspectionId])
+}
+
+model DispositionHistory {
+  id               String          @id @default(uuid()) @db.Uuid
+  nonconformanceId String          @db.Uuid
+  dispositionType  DispositionType
+  note             String?
+  decidedAt        DateTime        @db.Timestamptz(3)
+  createdAt        DateTime        @default(now()) @db.Timestamptz(3)
+  nonconformance   Nonconformance  @relation(fields: [nonconformanceId], references: [id], onDelete: Restrict)
+
+  @@index([nonconformanceId, decidedAt])
+  @@index([dispositionType, decidedAt])
+}
