@@ -7,6 +7,7 @@ import {
   getLocaleDirection,
   routing,
 } from "@/i18n/routing";
+import { AuthProvider } from "@/components/auth/auth-provider";
 import "../globals.css";
 
 type LocaleLayoutProps = {
@@ -51,7 +52,7 @@ export default async function LocaleLayout({
     <html lang={locale} dir={getLocaleDirection(locale as AppLocale)}>
       <body>
         <NextIntlClientProvider messages={messages}>
-          {children}
+          <AuthProvider>{children}</AuthProvider>
         </NextIntlClientProvider>
       </body>
     </html>

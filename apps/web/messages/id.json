@@ -1,7 +1,7 @@
 {
   "Metadata": {
-    "title": "Sistem Mutu & Ketertelusuran Manufaktur Baterai",
-    "description": "Aplikasi portofolio sintetis untuk alur kerja mutu dan ketertelusuran manufaktur baterai."
+    "title": "BMQT · Mutu & Ketertelusuran",
+    "description": "Ruang kerja aman untuk simulasi mutu dan ketertelusuran manufaktur."
   },
   "HomePage": {
     "phase": "Fase 1F · Fondasi Integrasi Full-Stack",
@@ -18,5 +18,136 @@
     "unavailable": "Layanan backend tidak tersedia",
     "checkingAction": "Memeriksa…",
     "checkAgain": "Periksa lagi"
+  },
+  "Shell": {
+    "brandSubtitle": "Mutu & Ketertelusuran",
+    "navigationLabel": "Navigasi aplikasi",
+    "mobileMenuLabel": "Menu aplikasi",
+    "openMenu": "Buka menu navigasi",
+    "closeMenu": "Tutup menu navigasi",
+    "dismissMenu": "Tutup panel navigasi",
+    "skipToContent": "Lewati ke konten utama",
+    "signOut": "Keluar",
+    "signingOut": "Sedang keluar",
+    "logoutError": "Proses keluar tidak dapat diselesaikan. Sesi terautentikasi Anda tetap aktif.",
+    "sections": {
+      "overview": "Ikhtisar",
+      "operations": "Operasi",
+      "quality": "Mutu",
+      "engineering": "Rekayasa",
+      "administration": "Administrasi"
+    },
+    "items": {
+      "overview": "Ikhtisar",
+      "traceability": "Ketertelusuran",
+      "production": "Produksi",
+      "inspections": "Inspeksi",
+      "nonconformance": "Ketidaksesuaian",
+      "actions": "Tindakan",
+      "users": "Pengguna"
+    },
+    "pages": {
+      "overview": {
+        "title": "Mutu & Ketertelusuran Manufaktur",
+        "description": "Ruang kerja aman berbasis peran untuk operasi manufaktur, mutu, dan genealogi produk.",
+        "stateTitle": "Ruang kerja terautentikasi Anda siap",
+        "stateDescription": "Kemampuan dasbor dan ketertelusuran akan diperkenalkan pada Fase 4. Tidak ada metrik manufaktur yang ditampilkan sebelum didukung model data aplikasi sintetis."
+      },
+      "traceability": {
+        "title": "Ketertelusuran",
+        "description": "Ruang kerja genealogi produk dan riwayat manufaktur.",
+        "stateTitle": "Ketertelusuran hadir pada fase berikutnya",
+        "stateDescription": "Pencarian dan tampilan riwayat ketertelusuran akan diterapkan pada Fase 4 menggunakan data backend sintetis."
+      },
+      "production": {
+        "title": "Produksi",
+        "description": "Ruang kerja pencatatan manufaktur untuk pengguna produksi yang berwenang.",
+        "stateTitle": "Alur kerja produksi belum diterapkan",
+        "stateDescription": "Rute ini hanya memvalidasi navigasi berbasis peran. Tidak ada formulir, catatan, atau operasi simulasi."
+      },
+      "inspections": {
+        "title": "Inspeksi",
+        "description": "Ruang kerja inspeksi untuk pengguna mutu yang berwenang.",
+        "stateTitle": "Alur kerja inspeksi belum diterapkan",
+        "stateDescription": "Entri inspeksi dan riwayat bukti tetap berada di fase domain berikutnya. Tidak ada catatan inspeksi yang disimulasikan."
+      },
+      "nonconformance": {
+        "title": "Ketidaksesuaian",
+        "description": "Akses alur kerja ketidaksesuaian untuk pengguna produksi dan mutu yang berwenang.",
+        "stateTitle": "Alur kerja ketidaksesuaian belum diterapkan",
+        "stateDescription": "Kasus, tindakan, dan disposisi tetap berada di fase domain berikutnya. Tidak ada catatan atau jumlah yang direkayasa."
+      },
+      "actions": {
+        "title": "Tindakan Rekayasa",
+        "description": "Ruang kerja tindakan bagi pengguna rekayasa yang berwenang.",
+        "stateTitle": "Tindakan rekayasa belum diterapkan",
+        "stateDescription": "Placeholder ini membuktikan batas shell aplikasi tanpa membuat catatan atau kontrol tindakan palsu."
+      },
+      "users": {
+        "title": "Pengguna",
+        "description": "Ruang kerja administrasi pengguna untuk administrator yang berwenang.",
+        "stateTitle": "Administrasi pengguna belum diterapkan",
+        "stateDescription": "Pengelolaan akun adalah kemampuan masa depan. Halaman ini tidak mengekspos identitas internal atau metadata keamanan."
+      }
+    },
+    "unavailable": {
+      "title": "Ruang kerja tidak tersedia",
+      "description": "Tujuan ini tidak tersedia untuk peran terautentikasi Anda.",
+      "stateTitle": "Kembali ke ruang kerja yang tersedia",
+      "stateDescription": "Visibilitas navigasi hanya meningkatkan kegunaan. Otorisasi sisi server tetap menjadi otoritas untuk setiap operasi terlindungi."
+    }
+  },
+  "Auth": {
+    "brand": {
+      "subtitle": "Mutu & Ketertelusuran",
+      "workspace": "Ruang kerja operasi manufaktur",
+      "workspaceShort": "Ruang kerja operasi",
+      "headlineLine1": "Riwayat mutu.",
+      "headlineLine2": "Konteks produksi.",
+      "headlineLine3": "Satu sistem tertelusur.",
+      "description": "Simulasi portofolio untuk mutu manufaktur, genealogi, inspeksi, ketidaksesuaian, dan ketertelusuran produksi.",
+      "trace": { "label": "LACAK", "description": "Genealogi unit" },
+      "quality": { "label": "MUTU", "description": "Riwayat inspeksi" },
+      "control": { "label": "KONTROL", "description": "Izin berbasis peran" }
+    },
+    "login": {
+      "eyebrow": "Ruang kerja aman",
+      "heading": "Selamat datang kembali",
+      "description": "Masuk untuk mengakses ruang kerja mutu manufaktur.",
+      "username": "Nama pengguna",
+      "password": "Kata sandi",
+      "protected": "Sesi terlindungi",
+      "show": "Tampilkan",
+      "hide": "Sembunyikan",
+      "showPassword": "Tampilkan kata sandi",
+      "hidePassword": "Sembunyikan kata sandi",
+      "signIn": "Masuk",
+      "signingIn": "Sedang masuk"
+    },
+    "secure": {
+      "title": "Sesi aman",
+      "description": "Kredensial sesi tetap terlindungi di dalam cookie HttpOnly."
+    },
+    "errors": {
+      "invalidCredentials": "Tidak dapat masuk dengan kredensial tersebut.",
+      "service": "Ruang kerja aman sementara tidak tersedia. Silakan coba lagi."
+    },
+    "bootstrap": {
+      "subtitle": "Mutu & Ketertelusuran",
+      "loading": "Memeriksa sesi aman Anda…",
+      "errorTitle": "Tidak dapat memeriksa sesi Anda",
+      "errorDescription": "Layanan autentikasi tidak dapat dijangkau. Status sesi Anda tidak diubah.",
+      "retry": "Coba lagi"
+    },
+    "authenticated": {
+      "subtitle": "Mutu & Ketertelusuran",
+      "eyebrow": "Ruang kerja terautentikasi",
+      "heading": "Akses ruang kerja dikonfirmasi",
+      "description": "Sesi aman Anda aktif. Navigasi berbasis peran dan fitur aplikasi akan diperkenalkan pada fase berikutnya.",
+      "sessionActive": "Sesi aman aktif",
+      "signOut": "Keluar",
+      "signingOut": "Sedang keluar",
+      "logoutError": "Proses keluar tidak dapat diselesaikan. Sesi terautentikasi Anda tetap aktif."
+    }
   }
 }

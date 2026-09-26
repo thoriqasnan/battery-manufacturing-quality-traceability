@@ -69,7 +69,7 @@ Multiple execution rows for the same physical unit and process preserve repeated
 
 Execution lifecycle is intentionally small: `IN_PROGRESS` has no finish timestamp, while `COMPLETED` and `ABORTED` require one. A finish timestamp cannot precede the start. These statuses describe whether work ran to completion, not whether detailed quality evidence passed or failed.
 
-Operator attribution is deferred until Phase 3 supplies user identity. Inspections, measurements, PASS/NG outcomes, nonconformance, corrective actions, and rework decisions are not part of `ProcessExecution`.
+Operator attribution is deferred until Phase 3 supplies authenticated identity. Phase 3A establishes that future mutations receive an authenticated synthetic actor, and Phase 3B supplies the user identity root; actor linkage remains deferred to later domain services. Inspections, measurements, PASS/NG outcomes, nonconformance, corrective actions, and rework decisions are not part of `ProcessExecution`.
 
 ## Inspection model
 
@@ -183,3 +183,9 @@ Traversal carries visited unit identities to terminate safely if malformed cycli
 Process history and quality history remain separate. Execution status describes whether work ran; inspection outcome describes quality. Attempts are chronological rows rather than rewritten state. NC reconstruction joins the original NG evidence to ordered cases, actions, linked retests, verification inspections, and all dispositions. A composed traceability view returns these focused collections together without flattening them.
 
 The integrity validator checks graph and cross-row meanings that individual database constraints cannot fully express. It does not replace the deferred Phase 2D/2E service rules for specification immutability, atomic inspection/result creation, outcome calculation, exactly-one-result enforcement, lifecycle transitions, NG-origin validation, action requirements, verification acceptance, effective disposition, cross-process rules, or authenticated actors.
+
+## Authenticated actor boundary
+
+The application user is a separate security identity, not a traceable manufacturing unit or a free-text operator name. The minimal fictional roles are `ADMIN`, `QUALITY`, `PRODUCTION`, and `ENGINEERING`; their permission bundles are defined in `docs/ARCHITECTURE.md`. Roles grant eligibility to request an operation, while domain services remain responsible for valid state transitions and evidence relationships.
+
+Phase 3B now provides the stable internal `User.id`, fixed role, and active/disabled state needed for future attribution, but intentionally adds no actor foreign keys to Phase 2 tables. Future attributed records use that internal identity and retain historical attribution even if the synthetic user is later deactivated or renamed. Inspection creation/completion attributes the inspector; manufacturing execution attributes the recording actor; action/rework history attributes the acting user; verification and disposition history attribute their decision actors. These links belong with the domain mutation services that can populate them atomically and add accountability without replacing or mutating the existing append-oriented event histories. Phase 3 must not prematurely implement the Phase 4–6 business workflows that create those records.

@@ -2,7 +2,7 @@
 
 The Phase 1B backend foundation for the Battery Manufacturing Quality & Traceability System. It uses NestJS, TypeScript, and a REST API structure.
 
-The only public API behavior remains the minimal health endpoint. Phase 2 adds the internal manufacturing/quality persistence model, deterministic synthetic seed, and reusable traceability/integrity queries, but no public database-backed endpoint. Authentication, authorization, and user-facing manufacturing features remain later-phase work.
+The only unauthenticated non-auth-contract behavior remains the minimal health endpoint. Phase 2 adds the internal manufacturing/quality persistence model, deterministic synthetic seed, and reusable traceability/integrity queries. Phase 3 adds Argon2id authentication, opaque database-backed sessions, cookie/CSRF/origin protection, default-deny permission guards, and security hardening; user-facing manufacturing APIs remain later-phase work.
 
 ## Local development
 
@@ -14,7 +14,26 @@ npm run start:dev
 
 The API listens on `http://localhost:3001` by default. Set `PORT` to override it.
 
-The browser CORS boundary accepts only `FRONTEND_ORIGIN`. Development defaults to `http://localhost:3000`; production requires an explicit valid HTTP(S) origin. Copy `.env.example` to an ignored local environment file and export the values using your preferred environment loader. The policy does not allow a wildcard and does not enable credentials.
+The credentialed browser CORS boundary accepts only `FRONTEND_ORIGIN`. Development defaults to `http://localhost:3000`; production requires an explicit valid HTTP(S) origin. Copy `.env.example` to an ignored local environment file and export the values using your preferred environment loader. The policy does not allow a wildcard. `AUTH_CSRF_SECRET` is backend-only and rejects the tracked placeholder.
+
+Production login attempts are limited to ten per client address per minute using bounded process-local state. A multi-instance deployment must replace or supplement this with shared edge/gateway limiting and reviewed proxy trust. API responses use explicit content-type, framing/CSP, referrer, and browser-permission headers. HSTS remains the responsibility of the confirmed HTTPS termination boundary.
+
+## Local acceptance users
+
+`npm run dev:users` is development-only tooling for provisioning the four fictional Phase 3 browser-acceptance accounts: `accept_admin`, `accept_quality`, `accept_production`, and `accept_engineering`. It refuses production execution and is not exposed through HTTP. Supply a temporary password without echoing it or storing it in shell history:
+
+```bash
+set -a
+source .env
+set +a
+read -s "BMQT_ACCEPTANCE_PASSWORD?Acceptance password: "
+echo
+export BMQT_ACCEPTANCE_PASSWORD
+npm run dev:users
+unset BMQT_ACCEPTANCE_PASSWORD
+```
+
+The password must contain 12–128 Unicode code points and cannot be all whitespace. The command uses the application's current Argon2id hashing service, creates missing fixed accounts, restores their expected role and active state on rerun, updates their password only when the command is explicitly run with a supplied value, and revokes their existing sessions after that update. It does not delete unrelated users or touch Phase 2 manufacturing data. Output contains only username, role, and created/updated status.
 
 ## PostgreSQL development setup
 
@@ -104,5 +123,6 @@ npm run lint
 npx tsc --noEmit
 npm run test
 npm run test:e2e
+npm run test:security-hardening
 npm run build
 ```

@@ -9,8 +9,9 @@ async function bootstrap() {
       process.env.FRONTEND_ORIGIN,
       process.env.NODE_ENV,
     ),
-    methods: ['GET', 'OPTIONS'],
-    allowedHeaders: ['Accept', 'Content-Type'],
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Accept', 'Content-Type', 'X-CSRF-Token'],
+    credentials: true,
   });
   await app.listen(process.env.PORT ?? 3001);
 }

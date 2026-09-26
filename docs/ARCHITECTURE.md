@@ -1,6 +1,6 @@
 # Technical Architecture
 
-This document records validated technical direction and current foundation evidence. Phase 1 and Phase 2 are verified complete following automated regression and final manual acceptance. Phase 2A introduces core product/process configuration, Phase 2B physical-unit genealogy, Phase 2C manufacturing execution history, Phase 2D quality-inspection specifications/evidence, Phase 2E nonconformance decision/action history, Phase 2F a deterministic synthetic seed dataset, Phase 2G reusable traceability queries and integrity validation, and Phase 2H the final integration/regression and acceptance gate. Phase 3 is next and has not started; public feature APIs, UI, authentication, analytics, and production infrastructure do not yet exist.
+This document records validated technical direction and current foundation evidence. Phases 1, 2, and 3 are verified complete following automated regression and their required manual acceptance. Phase 3 implements authentication and authorization contracts, user/role persistence, Argon2id credential verification, server-managed session transport, backend RBAC enforcement, frontend authentication, the role-aware application shell, and security/integration hardening. Phase 4 dashboard and traceability feature UI, analytics, and production infrastructure do not yet exist.
 
 ## System shape
 
@@ -32,7 +32,7 @@ Microservices are not justified. Nx and Turborepo will not be introduced unless 
 
 Phase 1F establishes the first browser-to-API path: the localized frontend calls the existing database-independent `GET /health` endpoint and renders checking, connected, or unavailable state. A small health helper owns native `fetch` and verifies HTTP success plus the expected `{ "status": "ok", "service": "api" }` values before the UI can report connected. It treats network errors, malformed JSON, and unexpected responses as unavailable.
 
-`NEXT_PUBLIC_API_BASE_URL` is the single public frontend API-origin contract. The example value is `http://localhost:3001`; missing or invalid configuration fails safely in the status UI, with no implicit production localhost fallback. NestJS CORS accepts the one configured `FRONTEND_ORIGIN`, defaults to `http://localhost:3000` only outside production, rejects non-origin values, and requires explicit configuration in production. Wildcard and credentialed CORS are not enabled.
+`NEXT_PUBLIC_API_BASE_URL` is the single public frontend API-origin contract. The example value is `http://localhost:3001`; missing or invalid configuration fails safely in the status UI, with no implicit production localhost fallback. NestJS CORS accepts the one configured `FRONTEND_ORIGIN`, defaults to `http://localhost:3000` only outside production, rejects non-origin values, and requires explicit configuration in production. Wildcard CORS is not enabled. Phase 3D enables credentials only for that exact origin so the browser can send the host-only session cookie.
 
 All status copy is provided through the existing `next-intl` resources in English and Bahasa Indonesia. Other planned locales continue to receive English fallback, and locale routing, persistence, and direction behavior are unchanged. Final manual acceptance verified English and Bahasa Indonesia rendering, locale persistence, Arabic English fallback with RTL layout, desktop and 375×812 responsive behavior, live full-stack connectivity, graceful unavailable-backend handling, and recovery after backend restart without a page refresh.
 
@@ -55,6 +55,159 @@ Phase 1D adds a reusable `PrismaModule` and lazy `PrismaService` as the data-acc
 Controllers should handle transport concerns, while services coordinate business rules. Core rules should not be placed in controllers or tightly coupled to Prisma query details.
 
 Potential domain boundaries are authentication, users, products/configuration, manufacturing, traceability, quality, and analytics. These are directions rather than finalized NestJS module or folder names.
+
+## Authentication and authorization architecture
+
+Authentication answers **who the user is**. The NestJS authentication boundary validates credentials at login, creates and resolves a session, and exposes a small authenticated-principal shape containing an internal user ID, synthetic display identifier, active state, and role. It does not decide which manufacturing or quality operation the user may perform.
+
+Authorization answers **what that authenticated user may do**. NestJS remains authoritative: protected routes declare permission metadata, a global/default-deny authentication guard resolves the principal, and a permission guard evaluates the required permission against a central role-to-permission policy. Controllers should declare policy requirements and pass the authenticated actor into services; they should not contain scattered role conditionals. Domain services must still enforce object state, relationships, and workflow invariants because a permission alone cannot make an invalid mutation valid.
+
+### Role and permission contract
+
+The initial model uses one role per fictional user and four small, stable role bundles. Permissions are stable code-level capabilities; display labels may be localized. `ADMIN` is a system-administration role, not an implicit bypass for domain decisions.
+
+| Capability / permission | ADMIN | QUALITY | PRODUCTION | ENGINEERING |
+| --- | :---: | :---: | :---: | :---: |
+| View dashboard (`dashboard:view`) | ✓ | ✓ | ✓ | ✓ |
+| View traceability (`traceability:view`) | ✓ | ✓ | ✓ | ✓ |
+| Record manufacturing execution (`manufacturing:record`) |  |  | ✓ |  |
+| Create/complete inspections (`inspection:write`) |  | ✓ |  |  |
+| Create a nonconformance (`nonconformance:create`) |  | ✓ | ✓ |  |
+| Update a nonconformance workflow (`nonconformance:update`) |  | ✓ |  |  |
+| Record engineering/rework action (`engineering-action:perform`) |  |  |  | ✓ |
+| Record verification (`verification:perform`) |  | ✓ |  |  |
+| Record disposition (`disposition:perform`) |  | ✓ |  |  |
+| Manage synthetic users/roles (`users:manage`) | ✓ |  |  |  |
+
+This matrix is the Phase 3 authorization contract, not implementation of Phase 4–7 workflows. A later requirement should add or adjust a permission deliberately rather than using ad hoc role checks or granting `ADMIN` universal domain mutation. Multiple roles per user, field-level ACLs, tenant/site scopes, approval hierarchies, and workplace-derived authorization structures are out of scope.
+
+### Browser session transport
+
+The selected transport is a server-managed opaque session. After successful login, NestJS issues a high-entropy opaque identifier in a host-only cookie with `HttpOnly`, `Secure` in deployed environments, `SameSite=Lax`, `Path=/`, and bounded expiry. Only a one-way digest of the identifier is stored with session metadata in PostgreSQL. The browser sends the cookie with credentialed API requests; JavaScript cannot read it. Development may omit `Secure` only for local HTTP. Production should keep the web and API on same-site HTTPS origins; Phase 3D exact-origin credentialed CORS permits the configured frontend origin only.
+
+This was selected over browser-stored bearer/JWT access tokens because the application is a first-party browser client and benefits from lower credential exposure to XSS, straightforward logout/revocation, and understandable operational behavior. Stateless JWTs would complicate immediate revocation without providing a needed distributed-service benefit. The server-side session store is the source of truth; logout revokes the current session and expires its cookie, and user deactivation or security-sensitive role/password changes revoke applicable sessions.
+
+Cookie authentication introduces CSRF risk. Authenticated unsafe requests must require a session-bound synchronizer CSRF token sent in a custom header and validate the request `Origin` against the configured frontend origin. `SameSite=Lax` is defense in depth, not the only CSRF control. Login has no session-bound token yet, so it requires strict configured-origin validation; login rate limiting is added during hardening. XSS remains separately mitigated through normal output safety and security hardening; CSRF controls do not make XSS harmless.
+
+### Authentication HTTP contracts
+
+The implemented REST boundary is:
+
+| Operation | Conceptual request | Successful result |
+| --- | --- | --- |
+| Login | `POST /auth/login` with synthetic login identifier and password from the configured frontend origin | `200`; creates session cookie and returns the safe current-user/session representation |
+| Logout | `POST /auth/logout` with current cookie and CSRF proof | `204`; revokes the server session and expires the cookie; safe to repeat |
+| Current session | `GET /auth/session` with current cookie | `200` with safe user, role, expiry, and a session-bound CSRF token |
+
+Missing, expired, revoked, or otherwise invalid authentication produces `401` with a stable `UNAUTHENTICATED` code and no sensitive detail. An authenticated principal lacking a required permission produces `403` with stable `FORBIDDEN`. Login failures are generic and do not reveal whether a user exists, is inactive, or supplied the wrong password. Response DTOs never include password hashes, raw session identifiers, or internal security metadata.
+
+### Frontend contract
+
+The Next.js application models `bootstrapping`, `authenticated`, and `unauthenticated` explicitly, plus recoverable unexpected request failures. It restores state only through the current-session contract, submits login, and performs logout without reading the HttpOnly cookie. Phase 3G adds permission-aware navigation derived from that authenticated state and restrained unavailable states for disallowed destinations. Role-aware UI is usability only: direct API calls remain subject to NestJS authorization.
+
+### Auditability and Phase 2 history
+
+Future domain mutations receive the authenticated principal from the request boundary and persist its internal user identity as the actor where attribution is meaningful. In particular, inspections need an authenticated inspector; `ActionHistory` needs the action actor; and verification and disposition events need their authenticated actors. Manufacturing execution records should likewise retain the recording actor when Phase 4 introduces mutation services.
+
+Actor references must preserve historical attribution if a synthetic user is later inactive or renamed; users referenced by history are not hard-deleted. An actor link supplements immutable event/history rows and does not authorize editing or overwriting them. Phase 3 establishes identity and policy infrastructure only—the deferred Phase 2D/2E lifecycle, calculation, verification, and disposition rules remain future quality/nonconformance service responsibilities.
+
+### Phase 3B user persistence foundation
+
+`User` is the minimal authentication identity root. It has an internal UUID, unique normalized `username`, required `passwordHash`, one `UserRole`, `isActive`, and creation/update timestamps. PostgreSQL constrains usernames to 3–64 lowercase ASCII letters, digits, dots, underscores, or hyphens, beginning with a letter or digit; human names and email addresses are not required identity fields. `passwordHash` stores only the self-contained modern password hash and rejects blank values; plaintext is never stored.
+
+`UserRole` is a fixed PostgreSQL/Prisma enum containing `ADMIN`, `QUALITY`, `PRODUCTION`, and `ENGINEERING`. This directly represents Phase 3A's one-role-per-user contract while Phase 3E keeps permission bundles in centralized application policy. There are no dynamic role, permission, user-role join, tenant, site, or enterprise IAM tables. `isActive` persists the enabled/disabled state enforced by authentication and session resolution.
+
+Migration `20260924000000_phase_3b_user_role_persistence` is additive and leaves all Phase 2 tables and migrations unchanged. No synthetic user is seeded. Development-only `npm run dev:users` provisions the four fixed fictional browser-acceptance users from a temporary environment-supplied password, refuses production execution, uses the centralized Argon2id service, and revokes those users' sessions on rerun; it exposes no HTTP registration path and tracks no reusable credential. Actor foreign keys are deferred until domain mutation services can populate them atomically; the stable `User.id` is ready to be referenced without prematurely altering every historical table.
+
+### Phase 3C password authentication
+
+`PasswordHashService` is the only cryptographic boundary. It uses maintained `argon2` with Argon2id and explicit centralized parameters: 19,456 KiB memory, two iterations, one lane, and a 32-byte output. The library generates a unique salt and encodes algorithm, version, parameters, salt, and hash in the stored PHC string, so no manual salt column exists. The service hashes policy-compliant new passwords, verifies candidates without logging credentials, and reports whether a stored hash uses obsolete parameters.
+
+New credentials must contain 12–128 Unicode code points and cannot be entirely whitespace. There are no uppercase, lowercase, digit, or symbol composition rules. The minimum encourages passphrases; the maximum bounds untrusted input without rejecting long password-manager values. Password text is not trimmed or normalized because that would alter the credential.
+
+`AuthenticationService.authenticateCredentials` trims and lowercases the username, looks up the `User`, verifies the candidate, rejects inactive accounts, and returns only internal ID, normalized username, role, and active state. Unknown users, incorrect passwords, and inactive users all throw the same `INVALID_CREDENTIALS` error and message. Unknown users still verify against a process-local randomly generated dummy Argon2id hash, reducing the most obvious account-existence timing difference without claiming complete side-channel elimination.
+
+The hash service uses the library's parameter comparison to detect hashes requiring upgrade and also rejects non-Argon2id hashes as current. When parameters change, a future successful authentication or explicit credential-change transaction should generate a current hash and replace the old value with a compare-and-update write; failed authentication never changes it. Phase 3C provides detection but intentionally avoids an implicit database write inside the minimal credential-check operation.
+
+Phase 3C adds no controller or externally reachable login endpoint, session record, cookie, CSRF behavior, logout/revocation, authentication/RBAC guard, or frontend behavior. Those remain Phase 3D and later work.
+
+### Phase 3D session and transport implementation
+
+`Session` is an additive persistence entity with a UUID primary key, required `User` relation, unique 64-character token digest, creation and absolute-expiration timestamps, and nullable revocation timestamp. Database checks require expiration after creation and revocation no earlier than creation. User deletion remains restricted. Indexed user/expiration paths support future account-wide revocation and expired-session cleanup without adding last-used or sliding-expiry state.
+
+`SessionTokenService` generates 32 random bytes with the operating-system cryptographic source and encodes them as opaque base64url. NestJS sends the raw value only in the session cookie and stores only its SHA-256 hexadecimal digest for exact lookup. Password hashing is intentionally not used for high-entropy random session identifiers. The absolute session lifetime is eight hours; access does not extend it. Unknown, expired, revoked, or inactive-user sessions resolve to the same `UNAUTHENTICATED` boundary.
+
+The host-only `bmqt_session` cookie has `HttpOnly`, `SameSite=Lax`, `Path=/`, expiry and Max-Age matching the server row, and `Secure` when `NODE_ENV=production`. No `Domain` attribute is set. Exact-origin credentialed CORS permits `GET`, `POST`, `OPTIONS`, content headers, and `X-CSRF-Token`; `FRONTEND_ORIGIN` remains the single configured browser origin.
+
+The HTTP contract is now implemented:
+
+| Operation | Behavior |
+| --- | --- |
+| `POST /auth/login` | Requires exact allowed `Origin`, validates the body, applies Phase 3C credential checks, creates a session, sets the cookie, and returns safe user data plus expiry and CSRF token; the opaque session token is never JSON. |
+| `GET /auth/session` | Resolves the cookie digest and active user, returning safe identity, expiry, and the session-bound CSRF token; invalid session state returns `UNAUTHENTICATED`. |
+| `POST /auth/logout` | Requires allowed `Origin` and, for a valid session, `X-CSRF-Token`; revokes the row and clears the cookie. Missing/already-invalid sessions clear safely, making repetition idempotent. |
+
+CSRF tokens are HMAC-SHA-256 values derived from the session UUID with an independent `AUTH_CSRF_SECRET` of at least 32 characters. They are authorization-independent request proofs, not session credentials. The frontend obtains the value from login or current-session JSON, holds it outside persistent credential storage, and sends it in `X-CSRF-Token` on authenticated unsafe requests. The server verifies both exact configured `Origin` and constant-time token equality. A token from one session cannot validate another session. The environment example contains only a rejected `CHANGE_ME` placeholder; deployed/local operators must supply a private value outside Git.
+
+Phase 3D itself added no permission metadata, role/permission evaluation, domain guards, or frontend login behavior. Phase 3E supplies backend RBAC and Phase 3F supplies frontend login/session behavior; Phase 3I subsequently accepted the live browser login, refresh, and logout lifecycle.
+
+### Phase 3E authorization enforcement
+
+Authorization uses stable permission strings and one centralized immutable `UserRole` mapping. The vocabulary is `dashboard:view`, `traceability:view`, `manufacturing:record`, `inspection:write`, `nonconformance:create`, `nonconformance:update`, `engineering-action:perform`, `verification:perform`, `disposition:perform`, and `users:manage`. This is application policy, not a dynamic permission database.
+
+The role bundles remain exactly those documented in the Phase 3A matrix. All roles can read dashboard and traceability. `PRODUCTION` can record manufacturing and create nonconformances; `QUALITY` can write inspections, create/update nonconformances, and perform verification/disposition; `ENGINEERING` can record engineering/rework actions; `ADMIN` can manage users/roles. `ADMIN` receives no implicit override and cannot mutate domain records unless a future policy explicitly grants that permission.
+
+NestJS applies three global guards in order:
+
+1. `AuthenticatedSessionGuard` resolves the host-only cookie through the server-side session and attaches a safe actor plus internal session context.
+2. `CsrfOriginGuard` requires exact origin and the session-bound CSRF header for protected unsafe methods; safe methods pass without CSRF.
+3. `PermissionGuard` reads `@RequirePermissions(...)` metadata and requires every declared permission.
+
+Routes must be explicitly `@Public()` or explicitly permission-protected. A non-public route with no required-permission metadata returns `403 FORBIDDEN`, which makes accidental omission default-deny. Authentication failures remain `401 UNAUTHENTICATED`; permission failures use the generic `403 FORBIDDEN`; CSRF/origin failures retain `403 SECURITY_CHECK_FAILED`. Authentication, request-integrity checks, and authorization remain distinct boundaries.
+
+`@AuthenticatedActor()` exposes only `{ id, username, role, isActive }` to controllers and future domain services. The actor contains no password hash, session token/digest, session UUID, or CSRF material and is suitable for later inspector, execution, action, verification, and disposition attribution. Role values from headers, query strings, or request bodies are ignored; authorization always uses the server-loaded user attached to the validated session.
+
+Phase 3E adds no production manufacturing/quality/admin endpoint and no actor foreign keys. Focused tests register test-only controllers to prove the policy infrastructure. Phase 3F supplies frontend login state, Phase 3G supplies role-aware navigation, and Phase 3I accepted both in real-browser use.
+
+### Phase 3F frontend authentication
+
+The frontend uses a small validated auth API boundary and React in-memory provider. Initialization calls credentialed `GET /auth/session` before protected content can render. A valid response becomes authenticated; `401` becomes unauthenticated; network, server, or malformed-response failures render an explicit retry state without pretending the user logged out. Refresh recovery always returns to the server session source of truth rather than browser token persistence.
+
+Login sends JSON credentials with `credentials: include` and lets the browser manage `Origin`. Generic `401` failures reveal no account-specific detail. Successful login keeps only safe user/session metadata and the session-bound CSRF token in React memory. No password, raw session credential, or CSRF token enters local storage, session storage, a URL, or persistent JavaScript storage. Logout sends the in-memory token as `X-CSRF-Token`; success or an already-invalid session returns to the unauthenticated view, while an unexpected failure leaves the authenticated state visible with a recoverable notice.
+
+The selected visual foundation is modern industrial enterprise SaaS: deep navy technical surfaces, cool-white content, strong restrained blue interaction states, slate neutrals, and semantic green/amber/red reserved for operational meaning. Desktop uses a balanced identity/login split with a high-contrast workspace badge and CSS-only industrial geometry. Mobile collapses to a focused single-column form; logical spacing preserves Arabic RTL safety. The real `next-intl` selector remains available, English is canonical/fallback, Bahasa Indonesia has complete auth copy, and other declared locales continue to use English fallback.
+
+Form controls have visible labels, appropriate autocomplete values, comfortable touch height, keyboard/focus behavior, accessible generic errors, and a keyboard-operable password visibility control that preserves input. The branded bootstrap state uses polite status semantics and respects reduced-motion preferences. Phase 3F intentionally provides only a minimal authenticated transition; Phase 3G owns role-aware navigation and the full application shell. Phase 3I accepted the browser layout, RTL, refresh, login, logout, and keyboard behavior.
+
+### Phase 3G role-aware application shell
+
+The approved shell extends the Phase 3F visual system rather than introducing a separate template. A deep-navy desktop sidebar groups Overview, Operations, Quality, Engineering, and Administration; a restrained white header carries current-page context, the real locale selector, and safe authenticated identity. The reusable content layout supports an eyebrow, page title, optional description/actions, and main content region. Current content is intentionally limited to localized readiness or future-phase placeholders.
+
+The frontend permission registry mirrors the Phase 3E vocabulary only to decide which navigation links are useful. It maps the server-established session role to explicit permissions and accepts no role or permission claims from route parameters, query strings, request bodies, or browser storage. `ADMIN` remains limited to dashboard/traceability read and user administration, with no implied production, inspection, nonconformance, or engineering mutation access. Hidden links never substitute for API authorization.
+
+The authenticated provider lives above locale workspace pages so client navigation retains session state where the App Router permits. Root Overview and shallow workspace destinations use the same bootstrap gate: neither the sidebar nor protected content renders while session resolution is pending or unauthenticated. Future routes are placeholders only and introduce no fake dashboard values, manufacturing records, domain forms, search control, notifications, or synthetic API behavior; Phase 4 owns dashboard and traceability capability.
+
+Below the desktop breakpoint, the persistent sidebar becomes a direction-aware modal drawer with a visible close control, backdrop dismissal, initial focus, contained Tab order, Escape handling, focus restoration, body-scroll containment, 44px targets, and reduced-motion behavior. Logical properties and locale-derived document direction place the drawer safely for Arabic RTL. Active destinations use both visual contrast and `aria-current`; a skip link, semantic navigation, visible focus rings, labelled locale/logout controls, and text labels alongside icons support keyboard and assistive-technology use. Phase 3I accepted the desktop/mobile transition, drawer interaction, keyboard behavior, role visibility, localized presentation, and Arabic RTL structure.
+
+### Phase 3H security and integration hardening
+
+The production route inventory is deliberately small. `GET /health` is `PUBLIC`. `POST /auth/login`, `GET /auth/session`, and `POST /auth/logout` are `AUTH CONTRACT SPECIAL CASE` routes on the explicitly public auth controller: login performs exact-origin validation and credential authentication; current-session resolves only the opaque cookie; logout performs origin, session-bound CSRF, revocation, and matching cookie clearing. Future production routes are `AUTHENTICATED + PERMISSION`: the global session, CSRF/origin, and permission guards execute in that order, and missing permission metadata fails closed. Current protected examples exist only in tests; no Phase 4 controller is exposed.
+
+Login now has a minimal single-process production limiter: ten attempts per client address in a one-minute fixed window, with bounded memory and a generic `429 TOO_MANY_ATTEMPTS` response independent of username validity. Local and test environments keep it disabled for deterministic development. This is sufficient for the current single-instance portfolio boundary, not a claim of distributed abuse protection. A multi-instance deployment must enforce shared limiting at an edge/gateway or shared store and configure trusted proxy handling deliberately so the application receives a reviewed client address.
+
+Both applications emit an explicit conservative header baseline: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, CSP `frame-ancestors 'none'`, `Referrer-Policy: no-referrer`, and disabled camera/geolocation/microphone permissions. The API additionally uses a deny-by-default resource CSP. The frontend limits CSP to safe framing/base/object directives because a nonce/hash strategy and `connect-src` require final deployment origins and Next.js runtime integration. HSTS belongs at the confirmed HTTPS termination boundary and is intentionally not emitted for local HTTP.
+
+One focused E2E test traverses login → digest-backed session/cookie → current session → permission-protected read → CSRF-protected write → logout/revocation → subsequent `401`. A separate assertion confirms successful logins always issue independent session and CSRF values; existing sessions are not automatically revoked because concurrent sessions remain allowed by the selected architecture. Test fixtures use suite-owned usernames and cleanup, and the prior session-count assertion is scoped to its own prefix.
+
+The dependency audit reports four high findings in backend Prisma CLI/tooling transitive dependencies. The recursive merge path is configuration tooling, and the MySQL advisories do not affect this PostgreSQL runtime; npm offers only a breaking Prisma 7-to-6 downgrade, which is rejected pending an upstream compatible update. Frontend Vitest/mocker development tooling was safely updated to 4.1.11, clearing its two moderate findings. These classifications do not dismiss the advisories: dependency audits must be repeated during Phase 8 production engineering and compatible upstream fixes adopted.
+
+### Phase 3I manual acceptance and final reconciliation
+
+User-operated browser acceptance passed invalid and valid login, password visibility, refresh-persistent authentication, logout and post-logout refresh, the expected navigation for all four roles, absence of unauthorized navigation items, desktop-to-mobile transition, drawer dismissal by control/backdrop/Escape, English and Indonesian presentation, Japanese and Arabic English fallback, Arabic RTL structure, and keyboard interaction. Automated coverage remains authoritative for destructive or impractical manual cases such as expired/revoked session handling, cookie attribute assertions, CSRF rejection, default-deny enforcement, and the complete backend role/permission matrix.
+
+The App Router favicon is an original opaque deep-navy BQ mark stored as a conventional ICO with 16, 32, and 48 pixel images. Its structure, metadata integration, `image/x-icon` response, source-response equivalence, production-build inclusion, and direct Safari rendering passed. Safari tabs on the localhost origin continued to display Safari's generated/cached “L” glyph even though the repository and emitted metadata contain no such asset. This is recorded as non-blocking local-origin browser behavior; tab rendering must be rechecked on the eventual deployment domain.
+
+Phase 3A through Phase 3I are verified complete. The security model remains bounded to the verified application behavior: HSTS after confirmed HTTPS termination, a stricter deployment-aware CSP, shared/edge rate limiting for multiple instances, trusted-proxy review, compatible upstream fixes for deferred Prisma tooling advisories, and deployment-origin favicon verification remain future production checks. Phase 4 dashboard and traceability functionality is next and has not started.
 
 ## Data architecture
 
@@ -103,7 +256,7 @@ Each completed inspection has `PASS` or `NG`, a positive attempt number, and an 
 
 `InspectionResult` uses a constrained typed-value layout: exactly one numeric, boolean, option, or nonblank text value is permitted according to its result type. Composite foreign keys ensure that inspection type/scope/process matches its specification, the physical target matches the configured scope, and categorical/visual selections belong to the same specification and type. Indexes support histories by unit, specification, process execution, outcome, and time.
 
-The persistence contract treats published or used specification versions and their options as immutable; changes create a new version. Because no quality service exists yet, preventing direct field mutation of used versions remains future service-layer validation. The service layer must also create the inspection and its required single result atomically and derive/verify `PASS` or `NG` against bounds, boolean expectations, or option acceptability. PostgreSQL currently enforces at most one result per inspection, but intentionally uses no trigger to require that result row. Actor attribution remains deferred until Phase 3.
+The persistence contract treats published or used specification versions and their options as immutable; changes create a new version. Because no quality service exists yet, preventing direct field mutation of used versions remains future service-layer validation. The service layer must also create the inspection and its required single result atomically and derive/verify `PASS` or `NG` against bounds, boolean expectations, or option acceptability. PostgreSQL currently enforces at most one result per inspection, but intentionally uses no trigger to require that result row. Phase 3A now defines the actor contract; persistence linkage remains deferred to later implementation subphases.
 
 This subphase adds no nonconformance, abnormal-case, action/rework, disposition, persistent seed, API/UI, analytics, authentication, or machine-integration behavior.
 
@@ -149,7 +302,7 @@ The integrity validator adds application-level checks that span rows and graphs:
 
 The complete Phase 2A–2G diff was reviewed from the Phase 1 baseline commit. The five additive migrations remain fully applied, unmodified during Phase 2H, and drift-free. Two consecutive final seed runs retained the same documented count vector. Live evidence and all nine integrity checks passed, followed by Prisma validation/generation/status/drift, TypeScript, lint, 7 unit tests, 10 traceability integration tests, 1 E2E health test, production build, and diff checking.
 
-The final review found no concrete correctness, data-integrity, security, performance, maintainability, or scope issue requiring a Phase 2H fix. The repository safety audit confirmed synthetic public data, ignored private environment configuration, no embedded credentials, parameterized raw SQL, no destructive seed behavior, and no Phase 3 implementation. The user then completed every manual acceptance item recorded in `ROADMAP.md`: migration readiness, two successful seed runs, live traceability/integrity evidence, focused traceability tests, and the grouped `npm run phase2:verify` regression all passed. Phase 2 is verified complete; Phase 3 is next and remains unstarted.
+The final review found no concrete correctness, data-integrity, security, performance, maintainability, or scope issue requiring a Phase 2H fix. The repository safety audit confirmed synthetic public data, ignored private environment configuration, no embedded credentials, parameterized raw SQL, no destructive seed behavior, and no Phase 3 implementation. The user then completed every manual acceptance item recorded in `ROADMAP.md`: migration readiness, two successful seed runs, live traceability/integrity evidence, focused traceability tests, and the grouped `npm run phase2:verify` regression all passed. Phase 2 is verified complete. Phase 3 has since added architecture contracts, identity persistence, credential verification, session transport, RBAC enforcement, and frontend authentication.
 
 ### Development configuration contract
 
@@ -159,6 +312,7 @@ The final review found no concrete correctness, data-integrity, security, perfor
 - Development database and role names must be project-specific and non-sensitive.
 - Production credentials must never be committed or reused for local development.
 - NestJS does not load environment files or open a database connection during startup, and health checks do not depend on database readiness.
+- `AUTH_CSRF_SECRET` is required when issuing or validating CSRF tokens and must be a private environment value of at least 32 characters; the tracked placeholder is deliberately rejected.
 - Phase 1D uses Prisma ORM 7.10.0 with `@prisma/adapter-pg` and the `pg` driver. The ESM client is generated to an ignored application-local directory.
 - `PrismaService` initializes its client lazily from `DATABASE_URL`, so missing or unavailable PostgreSQL does not prevent the API or health endpoint from starting.
 - Phase 2A provides product/process configuration, Phase 2B physical units/genealogy, Phase 2C manufacturing execution history, Phase 2D quality-inspection configuration/evidence, Phase 2E nonconformance action/decision history, Phase 2F deterministic synthetic examples, and Phase 2G internal traceability/integrity queries. Phase 2H automated regression and manual acceptance passed; Phase 2 is verified complete.

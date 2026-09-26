@@ -244,21 +244,188 @@ set -a; source .env; set +a
 - [x] **Focused traceability tests:** `npm run test:traceability` passed one test file and all 10 tests, covering genealogy, current/historical state, replacement and process/quality history, NC reconstruction, complete composition, unknown trace code, and integrity validation.
 - [x] **Final automated regression:** `npm run phase2:verify` passed Prisma format/validate/generate, migration status, no-drift comparison, TypeScript, lint with zero warnings/errors, 7 unit tests, 10 traceability tests, 1 E2E test, production build, and `git diff --check`.
 
-Phase 2A through Phase 2H and Phase 2 are **VERIFIED COMPLETE**. Phase 3 is next and has **NOT STARTED**. A Phase 2 commit remains a separate user-approved action.
+Phase 2A through Phase 2H and Phase 2 are **VERIFIED COMPLETE**. Phase 3 is **VERIFIED COMPLETE**.
 
 ## Phase 3 — Authentication & RBAC
 
-**Status: NEXT / NOT STARTED**
+**Status: VERIFIED COMPLETE**
 
-- Authentication
-- Users
-- Roles
-- Server-side authorization
-- Finalization of MVP permissions
+### Phase 3A — Auth/RBAC Architecture & Contracts
+
+**Status: VERIFIED COMPLETE**
+
+- Authentication and authorization are separate boundaries: authentication resolves a synthetic user from a revocable server-side session; authorization evaluates explicit permissions for that user.
+- Selected a server-managed opaque session carried in a secure, HTTP-only cookie, with explicit CSRF protection for state-changing requests. No bearer credential is exposed to browser JavaScript.
+- Defined conceptual login, logout, current-session, unauthenticated, and forbidden contracts without adding endpoints or implementation code.
+- Defined the minimal `ADMIN`, `QUALITY`, `PRODUCTION`, and `ENGINEERING` role bundles, NestJS guard/policy enforcement, frontend auth states, and actor-attribution expectations.
+- Reconciled architecture, domain, security, roadmap, and project-status documentation. No user schema, credential, authentication transport, guard, or UI was implemented.
+
+Acceptance criteria met:
+
+- [x] The repository and Phase 2 deferred actor responsibilities were reviewed.
+- [x] Authentication, session transport, CSRF, revocation/logout, RBAC, error, frontend-state, and auditability contracts are explicit.
+- [x] Permission boundaries cover only the Phase 3–7 MVP capabilities already on the roadmap.
+- [x] The public synthetic-data boundary and password/secrets principles are preserved.
+- [x] Source-of-truth documents recorded Phase 3A as complete, Phase 3 as in progress, and Phase 3B as the next subphase at the Phase 3A gate.
+- [x] Documentation/repository checks and a focused diff review passed.
+
+### Phase 3B — User/Role Persistence Foundation
+
+**Status: VERIFIED COMPLETE**
+
+- Added the minimal `User` persistence model with UUID identity, unique normalized synthetic username, required hash-only `passwordHash`, fixed `UserRole`, active/disabled state, and audit timestamps.
+- Represented `ADMIN`, `QUALITY`, `PRODUCTION`, and `ENGINEERING` as a PostgreSQL/Prisma enum because Phase 3A defines one stable role bundle per user; no dynamic IAM, ACL, permission, or role-administration tables were added.
+- Added and applied additive migration `20260924000000_phase_3b_user_role_persistence` without changing the five Phase 2 migrations or domain tables.
+- Added four focused database-backed tests for all role values, active/disabled persistence, username uniqueness/format, and nonblank hash storage. Tests create only temporary synthetic rows and remove them; no user or credential fixture was seeded.
+- Prisma format/validate/generate, six-migration status, no schema drift, TypeScript, lint, 7 unit tests, 4 user-persistence tests, 10 traceability tests, 1 E2E test, production build, and `git diff --check` passed.
+
+No manual acceptance is required for this persistence-only subphase. Phase 3B itself added no login, hashing/verification behavior, sessions, cookies, CSRF, authentication/RBAC guards, actor foreign keys, or frontend authentication; Phase 3C subsequently added only password hashing and credential verification.
+
+### Phase 3C — Password Authentication
+
+**Status: VERIFIED COMPLETE**
+
+- Added a centralized password-hash service using maintained `argon2` 0.45.1 with Argon2id, 19 MiB memory, two iterations, one lane, a 32-byte hash, and library-generated salts stored in the self-contained PHC string.
+- Added a server-side password policy of 12–128 Unicode code points with no arbitrary character-composition rules; all-whitespace passwords are rejected.
+- Added minimal credential authentication that normalizes usernames, validates the stored hash, rejects inactive users, returns only UUID/username/role/active identity, and exposes no password hash.
+- Unknown usernames, incorrect passwords, and inactive accounts use the same `INVALID_CREDENTIALS` failure. Unknown usernames perform verification against a process-local random dummy Argon2id hash to reduce obvious account-enumeration timing differences.
+- Added current-parameter rehash detection for a future successful-authentication/credential-update path without introducing sessions or hidden persistence writes in this subphase.
+- Added 12 focused hashing, policy, and credential-authentication tests using temporary fictional users with complete cleanup. No permanent account or reusable plaintext credential was seeded.
+- Prisma format/validate/generate, six-migration status, no schema drift, TypeScript, lint, 14 unit tests, 4 user-persistence tests, 12 authentication tests, 10 traceability tests, 1 E2E test, production build, and `git diff --check` passed.
+
+No manual acceptance is required because Phase 3C exposes no endpoint or UI. Phase 3C itself added no sessions, cookies, CSRF, logout/revocation, transport error mapping, authorization guards, or frontend authentication; Phases 3D and 3E subsequently implemented the backend transport and authorization boundaries.
+
+### Phase 3D — Session/Auth Transport
+
+**Status: VERIFIED COMPLETE**
+
+- Added revocable `Session` persistence with UUID identity, owning user, unique SHA-256 token digest, creation/absolute-expiration timestamps, optional revocation timestamp, lifecycle checks, and lookup/cleanup indexes.
+- Added 256-bit cryptographically random opaque session tokens. Only their digest is persisted; raw tokens exist only at the server/cookie boundary and are never returned in JSON or logged.
+- Implemented an eight-hour absolute lifetime with no sliding renewal. Expired, revoked, unknown, and inactive-user sessions resolve as `UNAUTHENTICATED`.
+- Implemented `POST /auth/login`, `GET /auth/session`, and idempotent `POST /auth/logout`. Login returns safe user/session metadata, current-session returns safe identity plus CSRF material, and logout revokes the row and clears the cookie.
+- Centralized a host-only `bmqt_session` cookie using `HttpOnly`, `SameSite=Lax`, `Path=/`, matching expiry/Max-Age, and `Secure` in production; no `Domain` attribute is set.
+- Added session-bound CSRF tokens derived with HMAC-SHA-256 from the session UUID and environment-only `AUTH_CSRF_SECRET`. Authenticated unsafe requests require the token in `X-CSRF-Token` plus an exact configured `Origin` match.
+- Updated exact-origin CORS for credentialed `GET`/`POST` requests and the CSRF header. No production origin or usable secret is hard-coded.
+- Added 3 security-primitive unit tests and 9 HTTP lifecycle tests covering digest-only persistence, login/cookies, current-session failures, expiration/revocation, inactive users, logout, origin enforcement, and missing/wrong/cross-session CSRF tokens. Temporary fictional users/sessions are removed.
+- Prisma format/validate/generate, seven-migration status, no schema drift, TypeScript, lint, 17 unit tests, 4 user-persistence tests, 15 authentication tests, 9 auth-transport tests, 10 traceability tests, 10 E2E tests, production build, and `git diff --check` passed.
+
+No additional manual gate is required for Phase 3D. Browser cookie behavior remains part of the final Phase 3I manual acceptance. Phase 3D itself added no domain permission metadata or RBAC guards; Phase 3E subsequently implemented those backend authorization boundaries.
+
+### Phase 3E — RBAC Authorization
+
+**Status: VERIFIED COMPLETE**
+
+- Added ten stable permissions matching the Phase 3A roadmap boundary and a centralized, immutable `UserRole` → permission mapping. No dynamic ACL/IAM persistence or speculative feature permission was introduced.
+- `ADMIN` explicitly receives dashboard/traceability read plus user administration only; it has no automatic domain-operation bypass.
+- Added global ordered NestJS guards for authenticated-session resolution, CSRF/origin enforcement on protected unsafe methods, and permission evaluation. Explicit `@Public()` metadata is required to bypass the protected pipeline.
+- Protected handlers without explicit permission metadata are denied by default. Missing/invalid session state returns `401 UNAUTHENTICATED`; authenticated users lacking policy return `403 FORBIDDEN`.
+- Added a typed authenticated actor context containing only UUID, normalized username, role, and active state. Password/session/CSRF internals are not exposed downstream.
+- Added 6 permission-matrix tests and 10 focused authorization E2E tests proving all role bundles, explicit ADMIN limits, default deny, safe actor delivery, session failure states, CSRF/origin ordering, and rejection of client-supplied role claims.
+- Fixed the existing auth-transport E2E count assertion to scope itself to its own synthetic fixtures so parallel E2E suites remain isolated.
+- Prisma validation/generation, seven-migration status, no schema drift, TypeScript, lint, 23 unit tests, 4 user-persistence tests, 21 authentication tests, 9 auth-transport tests, 10 authorization tests, 10 traceability tests, 20 E2E tests, production build, and `git diff --check` passed.
+
+No manual acceptance is required because Phase 3E adds backend infrastructure and test-only authorization surfaces rather than production domain endpoints. Phase 3F subsequently added frontend authentication without changing the backend security contract.
+
+### Phase 3F — Frontend Authentication
+
+**Status: VERIFIED COMPLETE**
+
+- Implemented the selected modern industrial enterprise SaaS login direction with a balanced desktop split, dark navy CSS-generated technical panel, cool-white authentication workspace, restrained blue interaction color, and semantic green reserved for active/healthy state.
+- Added responsive single-column mobile behavior, real `next-intl` locale switching, Arabic/RTL-safe logical layout, visible labels, 48px form controls, keyboard submission, accessible generic errors, reduced-motion-aware bootstrap progress, and a value-preserving Show/Hide password control.
+- Added explicit `BOOTSTRAPPING`, `AUTHENTICATED`, `UNAUTHENTICATED`, and recoverable unexpected-error states. Protected content stays hidden until `GET /auth/session` resolves; `401` becomes unauthenticated while network/5xx/unexpected failures remain recoverable rather than being treated as logout.
+- Added credentialed `POST /auth/login`, `GET /auth/session`, and CSRF-protected `POST /auth/logout` calls through a validated frontend API boundary. The browser-managed `bmqt_session` cookie is never read by JavaScript.
+- Kept the returned CSRF token only in React memory and added a reusable `X-CSRF-Token` header helper for authenticated unsafe requests. Passwords, session credentials, and CSRF material are never persisted in local/session storage or URLs.
+- Added only a minimal authenticated workspace transition with safe username/role display and logout. Role-aware navigation, forbidden-state application routing, and the full shell remain Phase 3G; backend authorization remains authoritative.
+- Added a minimal Vitest/jsdom/Testing Library setup and 11 focused tests covering bootstrap visibility and outcomes, refresh recovery, successful/generic-failure/network-failure login, hidden/show/hide password behavior, logout with in-memory CSRF, storage non-use, localized semantics, and responsive structure.
+- Frontend lint, Next route type generation, TypeScript, 11 auth tests, and webpack production build passed. Backend/Prisma regression passed with seven migrations current, no drift, 23 unit tests, 4 persistence tests, 21 authentication tests, 9 auth-transport tests, 10 authorization tests, 10 traceability tests, 20 E2E tests, lint/typecheck/build, and Prisma format/validate/generate.
+
+Phase 3I manual browser acceptance passed the Phase 3F login, invalid-credential, password-visibility, refresh-persistence, logout, post-logout refresh, responsive presentation, locale, RTL, and keyboard interaction checks.
+
+### Phase 3G — Role-aware UI
+
+**Status: VERIFIED COMPLETE**
+
+- Implemented the approved modern industrial enterprise SaaS application shell with a deep-navy persistent desktop sidebar, restrained top context bar, cool-neutral content workspace, shared authenticated page layout, and consistent lightweight icons.
+- Organized navigation into Overview, Operations, Quality, Engineering, and Administration. Visibility comes only from the authenticated session user's server-established role and a frontend mirror of Phase 3E permissions; it is usability behavior, not authorization enforcement.
+- Preserved explicit role boundaries: `ADMIN` sees Overview, Traceability, and Users without domain-mutation links; `QUALITY`, `PRODUCTION`, and `ENGINEERING` receive only their mapped destinations. Client-controlled URL/query/storage claims cannot grant links.
+- Added localized workspace routes behind the Phase 3F bootstrap gate, `aria-current` active states, and restrained unavailable/future-phase states without fake metrics, charts, records, forms, or API responses.
+- Integrated safe username/role presentation, the real locale switcher, and the existing credentialed CSRF-protected server logout. No UUID, cookie, session, password, CSRF, or security metadata is rendered or persisted.
+- Added a responsive RTL-safe mobile drawer with 44px targets, initial focus, contained Tab navigation, Escape/backdrop/visible-close behavior, focus restoration, scroll locking, and reduced-motion treatment.
+- Added 9 shell tests across all four roles, untrusted claims, active navigation, mobile keyboard behavior, localization, identity safety, logout access, and absence of fake metrics. Together with 13 Phase 3F authentication tests, 22 frontend tests pass; type generation, TypeScript, lint, and production build also pass.
+
+Phase 3I manual browser acceptance passed the desktop shell, all four role-specific navigation sets, unauthorized-link absence, responsive transition, mobile drawer close/backdrop/Escape behavior, locale continuity, Arabic RTL structure, and keyboard interaction checks.
+
+### Phase 3H — Security/Integration Hardening
+
+**Status: VERIFIED COMPLETE**
+
+- Completed a route-security inventory: `GET /health` is explicitly `PUBLIC`; `POST /auth/login`, `GET /auth/session`, and `POST /auth/logout` are explicit auth-contract special cases; test-only protected routes prove `AUTHENTICATED + PERMISSION` behavior. No production route is accidentally unclassified or exposes Phase 4 domain behavior.
+- Added a minimal login-specific fixed-window limiter enabled only in production: 10 attempts per client address per minute, generic `429 TOO_MANY_ATTEMPTS`, bounded process-local storage, no username-dependent behavior, and deterministic disabled behavior in local/test environments. It is appropriate for the current single-instance portfolio deployment; a multi-instance deployment requires shared edge/gateway limiting and reviewed trusted-proxy configuration.
+- Added explicit API and frontend security-header baselines: content-type sniffing prevention, frame denial plus CSP `frame-ancestors`, no-referrer policy, restricted browser capabilities, and conservative CSP base/object restrictions. The frontend CSP intentionally does not invent deployment script/connect hosts or block required Next.js runtime behavior. HSTS remains a TLS-termination/deployment responsibility and must be enabled only by the HTTPS production boundary.
+- Added a Phase 3H integrated E2E flow covering login, cookie/session creation, current-session bootstrap, protected permission read, CSRF-protected unsafe write, logout/revocation, and subsequent rejection. Fresh successful logins produce independent session and CSRF values; concurrent sessions remain permitted by the documented architecture.
+- Reverified token digest-only persistence, 256-bit entropy, server expiry/revocation/inactive-user checks, host-only cookie scope, production `Secure`, aligned expiry/Max-Age, session-bound constant-time CSRF checks, exact origins, restricted credentialed CORS, generic credential failures, Argon2id policy, safe actor output, default deny, ADMIN limits, and distinct `401`/permission `403`/security `403` contracts.
+- Confirmed fixture-owned test cleanup and prefix-scoped count assertions. Seven additive migrations are current with no drift; Phase 2 remains intact and temporary Phase 3H users/sessions are removed.
+- Dependency review found four backend high advisories confined to Prisma CLI/tooling transitive paths (`deepmerge-ts` and unused MySQL tooling). npm proposes a breaking Prisma 7→6 downgrade, so no unsafe fix was applied; PostgreSQL application runtime does not use the affected MySQL path. The two frontend moderate Vitest/mocker development advisories had a compatible fix, so Vitest was updated to 4.1.11 and the frontend audit now reports zero vulnerabilities.
+- Full verification passed: frontend 22 tests plus type generation, TypeScript, lint, and build; backend Prisma format/validate/generate/status/no-drift, TypeScript, lint, 25 unit tests, 4 persistence tests, 23 authentication tests, 9 transport tests, 10 authorization tests, 4 hardening tests, 10 traceability tests, 24 E2E tests, and production build.
+
+Phase 3H required no separate manual gate. Its security and integration evidence was rechecked as part of the final Phase 3 gate, while the assigned browser, cookie, responsive, keyboard, locale, RTL, and role-visibility checks passed in Phase 3I.
+
+### Phase 3I — Manual Acceptance & Final Reconciliation
+
+**Status: VERIFIED COMPLETE**
+
+The user-operated Phase 3I browser session produced the following acceptance evidence:
+
+#### Login
+
+- [x] Initial loading/bootstrap state is clear and protected shell content does not flicker.
+- [x] Login appearance matches the approved modern industrial enterprise SaaS direction.
+- [x] Username/password interaction and keyboard submission work.
+- [x] Show/Hide preserves the password value and remains keyboard accessible.
+- [x] Invalid credentials show the generic localized failure state.
+- [x] Valid synthetic credentials reach the authenticated shell.
+
+#### Session
+
+- [x] Refresh restores the authenticated session through the server.
+- [x] Logout revokes the session and returns to login.
+- [x] Refresh after logout remains logged out.
+- [x] Automated transport and integration tests cover expired, invalid, and revoked sessions without requiring unsafe manual database manipulation.
+
+#### Role-aware UI
+
+- [x] ADMIN shows Overview, Traceability, and Users only.
+- [x] QUALITY shows Overview, Traceability, Inspections, and Nonconformance.
+- [x] PRODUCTION shows Overview, Traceability, Production, and Nonconformance.
+- [x] ENGINEERING shows Overview, Traceability, and Actions.
+- [x] Automated bootstrap and routing tests confirm unauthenticated workspace navigation does not expose the shell.
+
+#### Responsive and interaction
+
+- [x] Desktop sidebar width, spacing, typography, contrast, active state, and focus state match the approved direction.
+- [x] Tablet/narrow layout has no observed horizontal scrolling or squeezed desktop sidebar.
+- [x] Mobile drawer opens and closes by button, backdrop, and Escape; its keyboard behavior and role-aware navigation were accepted.
+
+#### Internationalization and RTL
+
+- [x] English renders and navigates correctly.
+- [x] Bahasa Indonesia auth and shell copy render correctly.
+- [x] Japanese uses the intentional English fallback without structural breakage.
+- [x] Arabic uses the intentional English fallback and applies RTL safely without observed overflow or collision.
+
+#### Final Phase 3 gate
+
+- [x] Real-browser login, refresh, logout, and post-logout behavior are accepted; automated transport tests verify cookie attributes and server revocation.
+- [x] Role visibility matches the expected mapping and remains UX rather than backend security.
+- [x] No reusable credentials, secrets, real identities, or proprietary manufacturing information entered Git or acceptance evidence.
+
+The favicon uses an original opaque deep-navy BQ mark in `apps/web/src/app/favicon.ico`, with embedded 16, 32, and 48 pixel images. The asset, App Router integration, direct Safari rendering, response MIME type, and production-build inclusion passed. Safari continued to show its generated/cached localhost “L” tab glyph even though no such asset or metadata exists in the repository; this is non-blocking local-origin behavior and favicon tab rendering must be rechecked on the eventual deployment domain.
+
+Manual acceptance, final automated regression, and source-of-truth reconciliation passed. Phase 3A through Phase 3I and Phase 3 are **VERIFIED COMPLETE**.
 
 ## Phase 4 — Manufacturing Dashboard & Traceability
 
-**Status: PLANNED**
+**Status: NEXT / NOT STARTED**
 
 - Manufacturing dashboard
 - Pack trace-code search

@@ -1,12 +1,18 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
+import { AuthenticationModule } from './auth/authentication.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { TraceabilityModule } from './traceability/traceability.module.js';
+import { SecurityHeadersMiddleware } from './config/security-headers.middleware.js';
 
 @Module({
-  imports: [PrismaModule, TraceabilityModule],
+  imports: [AuthenticationModule, PrismaModule, TraceabilityModule],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(SecurityHeadersMiddleware).forRoutes('*');
+  }
+}

@@ -1,7 +1,7 @@
 {
   "Metadata": {
-    "title": "Battery Manufacturing Quality & Traceability System",
-    "description": "A synthetic portfolio application for battery manufacturing quality and traceability workflows."
+    "title": "BMQT · Quality & Traceability",
+    "description": "A secure synthetic manufacturing quality and traceability workspace."
   },
   "HomePage": {
     "phase": "Phase 1F · Full-Stack Integration Foundation",
@@ -18,5 +18,136 @@
     "unavailable": "Backend service unavailable",
     "checkingAction": "Checking…",
     "checkAgain": "Check again"
+  },
+  "Shell": {
+    "brandSubtitle": "Quality & Traceability",
+    "navigationLabel": "Application navigation",
+    "mobileMenuLabel": "Application menu",
+    "openMenu": "Open navigation menu",
+    "closeMenu": "Close navigation menu",
+    "dismissMenu": "Dismiss navigation menu",
+    "skipToContent": "Skip to main content",
+    "signOut": "Sign out",
+    "signingOut": "Signing out",
+    "logoutError": "Sign out could not be completed. Your authenticated session remains active.",
+    "sections": {
+      "overview": "Overview",
+      "operations": "Operations",
+      "quality": "Quality",
+      "engineering": "Engineering",
+      "administration": "Administration"
+    },
+    "items": {
+      "overview": "Overview",
+      "traceability": "Traceability",
+      "production": "Production",
+      "inspections": "Inspections",
+      "nonconformance": "Nonconformance",
+      "actions": "Actions",
+      "users": "Users"
+    },
+    "pages": {
+      "overview": {
+        "title": "Manufacturing Quality & Traceability",
+        "description": "A secure role-aware workspace for manufacturing operations, quality, and product genealogy.",
+        "stateTitle": "Your authenticated workspace is ready",
+        "stateDescription": "Dashboard and traceability capabilities will be introduced in Phase 4. No manufacturing metrics are shown until they are backed by the synthetic application data model."
+      },
+      "traceability": {
+        "title": "Traceability",
+        "description": "Product genealogy and manufacturing history workspace.",
+        "stateTitle": "Traceability is coming next",
+        "stateDescription": "Traceability search and history views will be implemented in Phase 4 using synthetic backend data."
+      },
+      "production": {
+        "title": "Production",
+        "description": "Manufacturing recording workspace for authorized production users.",
+        "stateTitle": "Production workflows are not implemented yet",
+        "stateDescription": "This route currently validates role-aware navigation only. It does not contain forms, records, or simulated operations."
+      },
+      "inspections": {
+        "title": "Inspections",
+        "description": "Quality inspection workspace for authorized quality users.",
+        "stateTitle": "Inspection workflows are not implemented yet",
+        "stateDescription": "Inspection entry and evidence history remain in a later domain phase. No inspection records are simulated here."
+      },
+      "nonconformance": {
+        "title": "Nonconformance",
+        "description": "Nonconformance workflow access for authorized production and quality users.",
+        "stateTitle": "Nonconformance workflows are not implemented yet",
+        "stateDescription": "Cases, actions, and dispositions remain in a later domain phase. No records or counts are fabricated here."
+      },
+      "actions": {
+        "title": "Engineering Actions",
+        "description": "Engineering action workspace for authorized engineering users.",
+        "stateTitle": "Engineering actions are not implemented yet",
+        "stateDescription": "This placeholder proves the application-shell boundary without creating fake action records or controls."
+      },
+      "users": {
+        "title": "Users",
+        "description": "User administration workspace for authorized administrators.",
+        "stateTitle": "User administration is not implemented yet",
+        "stateDescription": "Account management remains a future capability. This page does not expose internal identities or security metadata."
+      }
+    },
+    "unavailable": {
+      "title": "Workspace unavailable",
+      "description": "This destination is not available for your authenticated role.",
+      "stateTitle": "Return to an available workspace",
+      "stateDescription": "Navigation visibility improves usability only. Server-side authorization remains authoritative for every protected operation."
+    }
+  },
+  "Auth": {
+    "brand": {
+      "subtitle": "Quality & Traceability",
+      "workspace": "Manufacturing operations workspace",
+      "workspaceShort": "Operations workspace",
+      "headlineLine1": "Quality history.",
+      "headlineLine2": "Production context.",
+      "headlineLine3": "One traceable system.",
+      "description": "A portfolio simulation for manufacturing quality, genealogy, inspections, nonconformance, and production traceability.",
+      "trace": { "label": "TRACE", "description": "Unit genealogy" },
+      "quality": { "label": "QUALITY", "description": "Inspection history" },
+      "control": { "label": "CONTROL", "description": "Role permissions" }
+    },
+    "login": {
+      "eyebrow": "Secure workspace",
+      "heading": "Welcome back",
+      "description": "Sign in to access the manufacturing quality workspace.",
+      "username": "Username",
+      "password": "Password",
+      "protected": "Protected session",
+      "show": "Show",
+      "hide": "Hide",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "signIn": "Sign in",
+      "signingIn": "Signing in"
+    },
+    "secure": {
+      "title": "Secure session",
+      "description": "Session credentials remain protected in an HttpOnly cookie."
+    },
+    "errors": {
+      "invalidCredentials": "Unable to sign in with those credentials.",
+      "service": "The secure workspace is temporarily unavailable. Please try again."
+    },
+    "bootstrap": {
+      "subtitle": "Quality & Traceability",
+      "loading": "Checking your secure session…",
+      "errorTitle": "Unable to check your session",
+      "errorDescription": "The authentication service could not be reached. Your session state has not been changed.",
+      "retry": "Try again"
+    },
+    "authenticated": {
+      "subtitle": "Quality & Traceability",
+      "eyebrow": "Authenticated workspace",
+      "heading": "Workspace access confirmed",
+      "description": "Your secure session is active. Role-aware navigation and application features will be introduced in the next phase.",
+      "sessionActive": "Secure session active",
+      "signOut": "Sign out",
+      "signingOut": "Signing out",
+      "logoutError": "Sign out could not be completed. Your authenticated session remains active."
+    }
   }
 }
