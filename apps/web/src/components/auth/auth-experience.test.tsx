@@ -11,6 +11,10 @@ vi.mock("@/components/language-switcher", () => ({
   LanguageSwitcher: () => <label>Language<select aria-label="Language"><option>English</option></select></label>,
 }));
 
+vi.mock("@/components/dashboard/overview-dashboard", () => ({
+  OverviewDashboard: () => <section>Dashboard overview</section>,
+}));
+
 vi.mock("@/i18n/navigation", () => ({
   Link: ({ href, children, ...props }: React.ComponentProps<"a">) => <a href={String(href)} {...props}>{children}</a>,
   usePathname: () => "/",
@@ -76,7 +80,7 @@ describe("frontend authentication experience", () => {
     renderAuth();
 
     expect(screen.getByRole("status")).toHaveTextContent("Checking your secure session");
-    expect(screen.queryByText("Your authenticated workspace is ready")).not.toBeInTheDocument();
+    expect(screen.queryByText("Dashboard overview")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^sign in/i })).not.toBeInTheDocument();
   });
 
@@ -84,7 +88,7 @@ describe("frontend authentication experience", () => {
     fetchMock.mockResolvedValueOnce(response(200, sessionBody));
     renderAuth();
 
-    expect(await screen.findByText("Your authenticated workspace is ready")).toBeVisible();
+    expect(await screen.findByText("Dashboard overview")).toBeVisible();
     expect(screen.getAllByText("synthetic.user")[0]).toBeVisible();
     expect(fetchMock).toHaveBeenCalledWith(
       expect.objectContaining({ pathname: "/auth/session" }),
@@ -116,7 +120,7 @@ describe("frontend authentication experience", () => {
     await waitForLogin();
     await submitLogin();
 
-    expect(await screen.findByText("Your authenticated workspace is ready")).toBeVisible();
+    expect(await screen.findByText("Dashboard overview")).toBeVisible();
     expect(fetchMock).toHaveBeenLastCalledWith(
       expect.objectContaining({ pathname: "/auth/login" }),
       expect.objectContaining({ method: "POST", credentials: "include" }),
@@ -204,13 +208,13 @@ describe("frontend authentication experience", () => {
 
     await user.click(await screen.findByRole("button", { name: "Sign out" }));
     await waitForLogin();
-    expect(screen.queryByText("Your authenticated workspace is ready")).not.toBeInTheDocument();
+    expect(screen.queryByText("Dashboard overview")).not.toBeInTheDocument();
   });
 
   it("recovers on refresh only by requesting the current session", async () => {
     fetchMock.mockResolvedValueOnce(response(200, sessionBody));
     renderAuth();
-    await screen.findByText("Your authenticated workspace is ready");
+    await screen.findByText("Dashboard overview");
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect((fetchMock.mock.calls[0]?.[0] as URL).pathname).toBe("/auth/session");

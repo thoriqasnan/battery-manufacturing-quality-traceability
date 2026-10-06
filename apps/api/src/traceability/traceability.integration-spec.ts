@@ -5,12 +5,82 @@ import { TraceabilityRepository } from './traceability.repository.js';
 import { TraceabilityService } from './traceability.service.js';
 
 describe('Phase 2G deterministic traceability queries', () => {
+  const utcTestParentCode = 'PHASE4J-UTC-PARENT';
+  const utcTestChildCode = 'PHASE4J-UTC-CHILD';
   const prisma = new PrismaService();
   const repository = new TraceabilityRepository(prisma);
   const service = new TraceabilityService(repository);
   const integrity = new TraceabilityIntegrityService(prisma);
 
   afterAll(async () => prisma.onModuleDestroy());
+
+  it('persists and updates an absolute UTC genealogy instant without a session-timezone shift', async () => {
+    const target = new Date('2026-01-11T08:00:00Z');
+    let parentId: string | undefined;
+    let childId: string | undefined;
+
+    try {
+      const timezone = await prisma.client.$queryRaw<
+        Array<{ timezone: string }>
+      >`SELECT current_setting('TimeZone') AS timezone`;
+      expect(timezone).toEqual([{ timezone: 'UTC' }]);
+
+      const [parent, child] = await Promise.all([
+        prisma.client.traceableUnit.create({
+          data: { traceCode: utcTestParentCode, unitType: 'MODULE' },
+        }),
+        prisma.client.traceableUnit.create({
+          data: { traceCode: utcTestChildCode, unitType: 'COMPONENT' },
+        }),
+      ]);
+      parentId = parent.id;
+      childId = child.id;
+
+      const relation = await prisma.client.genealogyRelation.create({
+        data: {
+          parentUnitId: parent.id,
+          childUnitId: child.id,
+          positionCode: 'UTC-TEST-01',
+          installedAt: new Date('2026-01-11T07:00:00Z'),
+        },
+      });
+      await prisma.client.genealogyRelation.upsert({
+        where: { id: relation.id },
+        create: {
+          id: relation.id,
+          parentUnitId: parent.id,
+          childUnitId: child.id,
+          positionCode: 'UTC-TEST-01',
+          installedAt: target,
+        },
+        update: { installedAt: target },
+      });
+
+      const persisted = await prisma.client.$queryRaw<
+        Array<{ epoch: number }>
+      >`SELECT EXTRACT(EPOCH FROM "installedAt")::double precision AS epoch
+        FROM "GenealogyRelation"
+        WHERE id = ${relation.id}::uuid`;
+      expect(persisted).toEqual([{ epoch: 1_768_118_400 }]);
+
+      const readBack = await prisma.client.genealogyRelation.findUniqueOrThrow({
+        where: { id: relation.id },
+        select: { installedAt: true },
+      });
+      expect(readBack.installedAt.toISOString()).toBe(
+        '2026-01-11T08:00:00.000Z',
+      );
+    } finally {
+      if (parentId && childId) {
+        await prisma.client.genealogyRelation.deleteMany({
+          where: { parentUnitId: parentId, childUnitId: childId },
+        });
+      }
+      await prisma.client.traceableUnit.deleteMany({
+        where: { traceCode: { in: [utcTestParentCode, utcTestChildCode] } },
+      });
+    }
+  });
 
   it('traverses forward through multiple genealogy levels', async () => {
     const result = await service.forwardGenealogy('PACK-DEMO-ALPHA-PASS');

@@ -54,6 +54,8 @@ out/
 dist/
 build/
 lib/
+!apps/web/src/lib/
+!apps/web/src/lib/**
 .swc/
 *.tsbuildinfo
 next-env.d.ts

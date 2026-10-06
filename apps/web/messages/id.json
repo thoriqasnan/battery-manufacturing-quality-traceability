@@ -48,16 +48,17 @@
     },
     "pages": {
       "overview": {
-        "title": "Mutu & Ketertelusuran Manufaktur",
-        "description": "Ruang kerja aman berbasis peran untuk operasi manufaktur, mutu, dan genealogi produk.",
+        "title": "Ikhtisar",
+        "description": "Ruang kerja mutu dan ketertelusuran manufaktur.",
         "stateTitle": "Ruang kerja terautentikasi Anda siap",
         "stateDescription": "Kemampuan dasbor dan ketertelusuran akan diperkenalkan pada Fase 4. Tidak ada metrik manufaktur yang ditampilkan sebelum didukung model data aplikasi sintetis."
       },
       "traceability": {
         "title": "Ketertelusuran",
         "description": "Ruang kerja genealogi produk dan riwayat manufaktur.",
-        "stateTitle": "Ketertelusuran hadir pada fase berikutnya",
-        "stateDescription": "Pencarian dan tampilan riwayat ketertelusuran akan diterapkan pada Fase 4 menggunakan data backend sintetis."
+        "stateTitle": "Detail unit hadir berikutnya",
+        "stateDescription": "Pencarian tersedia sekarang. Detail unit dan genealogi tetap menjadi bagian dari subfase Fase 4 berikutnya.",
+        "selectedTraceCode": "Kode lacak terpilih:"
       },
       "production": {
         "title": "Produksi",
@@ -96,6 +97,284 @@
       "stateTitle": "Kembali ke ruang kerja yang tersedia",
       "stateDescription": "Visibilitas navigasi hanya meningkatkan kegunaan. Otorisasi sisi server tetap menjadi otoritas untuk setiap operasi terlindungi."
     }
+  },
+  "Dashboard": {
+    "trace": {
+      "eyebrow": "Ketertelusuran",
+      "title": "Lacak unit",
+      "description": "Masukkan satu kode lacak sintetis untuk melanjutkan ke ruang kerja ketertelusuran.",
+      "label": "Kode lacak",
+      "placeholder": "PACK-ALPHA-0001",
+      "action": "Lacak unit",
+      "invalid": "Masukkan 1–128 huruf, angka, tanda hubung, atau garis bawah.",
+      "help": "Kode lacak dinormalisasi menjadi huruf kapital."
+    },
+    "states": {
+      "loading": "Memuat ikhtisar operasional…",
+      "errorEyebrow": "Dasbor tidak tersedia",
+      "errorTitle": "Tidak dapat memuat ikhtisar operasional",
+      "errorDescription": "Layanan dasbor tidak dapat dijangkau. Coba lagi untuk meminta bukti terkini.",
+      "forbiddenTitle": "Akses dasbor tidak tersedia",
+      "forbiddenDescription": "Peran terautentikasi Anda tidak memiliki izin untuk melihat dasbor operasional.",
+      "retry": "Coba lagi"
+    },
+    "summary": {
+      "eyebrow": "Bukti operasional",
+      "title": "Ikhtisar manufaktur",
+      "generated": "Dibuat",
+      "totalUnits": "Unit tertelusur",
+      "inProgress": "Proses sedang berjalan",
+      "inspections": "Catatan inspeksi",
+      "openNc": "Kasus NC terbuka",
+      "inProgressNc": "Kasus NC sedang berjalan"
+    },
+    "inventory": { "eyebrow": "Inventaris", "title": "Unit tertelusur berdasarkan jenis" },
+    "quality": {
+      "eyebrow": "Bukti mutu",
+      "title": "Hasil inspeksi",
+      "pass": "LULUS",
+      "ng": "NG",
+      "scopeAllRecords": "Jumlah mencakup semua catatan inspeksi tersimpan. Tidak ada tingkat hasil yang disimpulkan.",
+      "unavailable": "Bukti inspeksi saat ini tidak tersedia; nilai nol tidak tersirat."
+    },
+    "models": {
+      "eyebrow": "Konteks produk",
+      "title": "Pack berdasarkan model produk",
+      "packs": "pack",
+      "empty": "Tidak ada bukti pack model produk tersimpan yang tersedia."
+    },
+    "nonconformance": {
+      "eyebrow": "Ketidaksesuaian",
+      "title": "Konteks kasus aktif",
+      "open": "Kasus terbuka",
+      "inProgress": "Kasus sedang berjalan",
+      "context": "Jumlah siklus hidup ini tidak mewakili semua kegagalan mutu dan tidak menetapkan status mutu keseluruhan."
+    },
+    "activity": {
+      "eyebrow": "Riwayat manufaktur",
+      "title": "Aktivitas manufaktur terbaru",
+      "attempt": "Percobaan {number}",
+      "empty": "Tidak ada aktivitas eksekusi proses yang tersedia."
+    },
+    "unitTypes": { "PACK": "PACK", "MODULE": "MODUL", "CELL": "SEL", "COMPONENT": "KOMPONEN", "MATERIAL": "MATERIAL" },
+    "statuses": { "IN_PROGRESS": "Sedang berjalan", "COMPLETED": "Selesai", "ABORTED": "Dibatalkan" }
+  },
+  "TraceabilitySearch": {
+    "eyebrow": "Ketertelusuran",
+    "title": "Temukan unit tertelusur",
+    "description": "Jelajahi unit sintetis tersimpan atau persempit bukti berdasarkan kode lacak, jenis unit, dan model produk langsung.",
+    "form": {
+      "traceCode": "Kode lacak",
+      "tracePlaceholder": "PACK-DEMO-ALPHA",
+      "traceHelp": "Pencarian tepat atau awalan opsional. Kode lacak dinormalisasi menjadi huruf kapital.",
+      "traceInvalid": "Masukkan maksimal 128 huruf, angka, tanda hubung, atau garis bawah.",
+      "unitType": "Jenis unit",
+      "allUnitTypes": "Semua jenis unit",
+      "unitTypeHelp": "Mencakup pack, modul, sel, komponen, dan material.",
+      "productModel": "Kode model produk",
+      "productModelPlaceholder": "DEMO_ALPHA",
+      "productModelHelp": "Filter model produk langsung opsional; tidak menyimpulkan model turunan.",
+      "productModelInvalid": "Masukkan maksimal 64 huruf, angka, tanda hubung, atau garis bawah.",
+      "search": "Cari",
+      "clear": "Hapus"
+    },
+    "results": {
+      "eyebrow": "Bukti tersimpan",
+      "title": "Unit tertelusur",
+      "count": "{count} unit cocok",
+      "exact": "Kecocokan tepat",
+      "unitTypeLabel": "Jenis unit:",
+      "productModel": "Model produk langsung",
+      "notApplicable": "Tidak ditetapkan langsung",
+      "created": "Dicatat",
+      "lastActivity": "Aktivitas langsung terbaru",
+      "noActivity": "Belum ada aktivitas langsung",
+      "open": "Buka unit",
+      "openUnit": "Buka unit tertelusur {traceCode}"
+    },
+    "pagination": {
+      "label": "Halaman pencarian ketertelusuran",
+      "previous": "Sebelumnya",
+      "next": "Berikutnya",
+      "page": "Halaman {page} dari {totalPages}"
+    },
+    "states": {
+      "loading": "Memuat bukti ketertelusuran tersimpan…",
+      "emptyTitle": "Tidak ada unit tertelusur yang cocok",
+      "emptyDescription": "Sesuaikan atau hapus kode lacak dan filter saat ini untuk mencari lagi.",
+      "pageEmptyTitle": "Halaman ini tidak memiliki hasil",
+      "pageEmptyDescription": "Kembali ke halaman sebelumnya untuk meninjau unit cocok yang tersedia.",
+      "forbiddenTitle": "Akses ketertelusuran tidak tersedia",
+      "forbiddenDescription": "Peran terautentikasi Anda tidak memiliki izin untuk mencari bukti ketertelusuran.",
+      "invalidTitle": "Permintaan pencarian tidak valid",
+      "invalidDescription": "Tinjau kode lacak, filter, dan nilai halaman sebelum mencoba lagi.",
+      "serverTitle": "Tidak dapat memuat bukti ketertelusuran",
+      "serverDescription": "Layanan ketertelusuran tidak dapat menyelesaikan permintaan. Coba lagi.",
+      "networkTitle": "Tidak dapat menjangkau ketertelusuran",
+      "networkDescription": "Periksa koneksi layanan dan coba pencarian lagi.",
+      "unexpectedTitle": "Respons ketertelusuran tidak terduga",
+      "unexpectedDescription": "Respons tidak dapat ditampilkan dengan aman. Coba lagi.",
+      "retry": "Coba lagi"
+    },
+    "unitTypes": { "PACK": "PACK", "MODULE": "MODUL", "CELL": "SEL", "COMPONENT": "KOMPONEN", "MATERIAL": "MATERIAL" }
+  },
+  "TraceabilityDetail": {
+    "search": {
+      "title": "Cari unit tertelusur lainnya",
+      "description": "Mulai pencarian kode lacak baru tanpa meninggalkan alur kerja ketertelusuran.",
+      "label": "Kode lacak",
+      "placeholder": "PACK-DEMO-ALPHA-RETEST",
+      "help": "Pencarian membuka ruang kerja hasil Ketertelusuran yang sudah ada.",
+      "invalid": "Masukkan 1–128 huruf, angka, tanda hubung, atau garis bawah.",
+      "action": "Cari unit"
+    },
+    "identity": {
+      "eyebrow": "Identitas unit",
+      "description": "Identitas tersimpan dan konteks produk langsung untuk unit tertelusur ini.",
+      "unitType": "Jenis unit",
+      "productModel": "Model produk langsung",
+      "notAssigned": "Tidak ditetapkan langsung",
+      "recorded": "Dicatat",
+      "updated": "Diperbarui"
+    },
+    "evidence": {
+      "eyebrow": "Ketersediaan bukti",
+      "title": "Catatan tersedia",
+      "description": "Jumlah hanya mengonfirmasi bukti yang tersimpan langsung. Jumlah tidak menetapkan kondisi unit, penyelesaian, atau hasil mutu.",
+      "genealogy": "Relasi genealogi langsung",
+      "process": "Catatan proses",
+      "quality": "Catatan mutu",
+      "nonconformance": "Catatan ketidaksesuaian"
+    },
+    "genealogy": {
+      "eyebrow": "Relasi material",
+      "title": "Genealogi",
+      "description": "Tinjau bukti induk dan anak tersimpan yang dibatasi, lalu buka unit terkait untuk melanjutkan pelacakan.",
+      "ancestors": "Konteks induk dan leluhur",
+      "ancestorsDescription": "Konteks saat ini dibatasi hingga delapan tingkat. Jalur historis tetap menjadi jalur bukti terpisah.",
+      "descendants": "Anak dan komponen langsung",
+      "descendantsDescription": "Satu tingkat langsung ditampilkan secara bawaan. Buka unit terkait untuk melanjutkan ke bawah.",
+      "noAncestors": "Tidak ada bukti relasi induk dalam cakupan yang dipilih.",
+      "noDescendants": "Tidak ada bukti relasi anak dalam cakupan yang dipilih.",
+      "loadMore": "Muat relasi lainnya",
+      "loadingMore": "Memuat lainnya…",
+      "loadMoreError": "Relasi lainnya tidak dapat dimuat. Bukti yang ada tetap terlihat; coba lagi.",
+      "partialTitle": "Tampilan ini dibatasi",
+      "partial": {
+        "EDGE_LIMIT": "Relasi lainnya tersedia. Gunakan Muat relasi lainnya untuk melanjutkan.",
+        "DEPTH_LIMIT": "Relasi tambahan ada di luar kedalaman yang diminta. Buka unit terkait untuk melanjutkan pelacakan.",
+        "CYCLE_PATH_SKIPPED": "Jalur siklik dihilangkan."
+      },
+      "cycleWarning": "Jalur relasi siklik terdeteksi dan dihilangkan dengan aman. Bukti lainnya tetap ditampilkan."
+    },
+    "scope": {
+      "label": "Cakupan genealogi",
+      "current": "Saat ini",
+      "historical": "Bukti historis",
+      "asOf": "Pada suatu waktu",
+      "historicalNotice": "Bukti historis mencakup relasi saat ini dan yang telah dilepas. Jalur yang dikembalikan adalah bukti garis keturunan dan tidak menyiratkan bahwa setiap relasi aktif pada waktu yang sama.",
+      "atLabel": "Tanggal dan waktu pilihan",
+      "atPlaceholder": "DD/MM/YYYY, HH:mm",
+      "atHelp": "Masukkan waktu lokal sebagai DD/MM/YYYY, HH:mm. Nilai dikirim sebagai satu waktu dengan zona waktu.",
+      "atRequired": "Masukkan tanggal dan waktu lengkap sebagai DD/MM/YYYY, HH:mm sebelum meminta genealogi pada waktu tertentu.",
+      "apply": "Terapkan waktu",
+      "pickerOpen": "Pilih tanggal dan waktu",
+      "pickerClose": "Tutup pemilih tanggal dan waktu",
+      "pickerLegend": "Pilih tanggal dan waktu",
+      "pickerYear": "Tahun",
+      "pickerMonth": "Bulan",
+      "pickerDay": "Hari",
+      "pickerHour": "Jam",
+      "pickerMinute": "Menit",
+      "pickerTime": "Waktu"
+    },
+    "relationship": {
+      "parent": "Relasi induk",
+      "child": "Relasi anak",
+      "depth": "Kedalaman {depth}",
+      "position": "Kode posisi",
+      "installed": "Dipasang",
+      "removed": "Dilepas",
+      "current": "Saat ini",
+      "historical": "Dilepas / historis",
+      "activeThenRemoved": "Aktif saat itu; kemudian dilepas",
+      "asOfExplanation": "Relasi ini aktif pada waktu yang dipilih dan dilepas setelahnya."
+    },
+    "history": {
+      "attempt": "Percobaan",
+      "process": {
+        "eyebrow": "Bukti manufaktur", "title": "Riwayat manufaktur",
+        "description": "Eksekusi proses yang dicatat langsung untuk unit ini. Riwayat ini tidak dipengaruhi cakupan Genealogi yang dipilih.",
+        "loading": "Memuat riwayat proses yang dicatat langsung…", "empty": "Tidak ada bukti eksekusi proses yang dicatat langsung untuk unit ini.",
+        "paginationLabel": "Halaman riwayat manufaktur", "method": "Metode aktual", "started": "Dimulai", "finished": "Selesai", "notFinished": "Tidak dicatat", "route": "Konteks rute", "routeContext": "Versi {version}, langkah {step}",
+        "status": { "IN_PROGRESS": "Sedang berjalan", "COMPLETED": "Selesai", "ABORTED": "Dibatalkan" },
+        "methods": { "MANUAL": "Manual", "AUTOMATED": "Otomatis", "HYBRID": "Hibrida" }
+      },
+      "quality": {
+        "eyebrow": "Bukti inspeksi", "title": "Riwayat kualitas",
+        "description": "Inspeksi yang dicatat langsung untuk unit ini. Hasil inspeksi bukan status siklus ketidaksesuaian dan tidak dipengaruhi cakupan Genealogi.",
+        "loading": "Memuat riwayat kualitas yang dicatat langsung…", "empty": "Tidak ada bukti inspeksi kualitas yang dicatat langsung untuk unit ini.",
+        "emptyFiltered": "Tidak ada inspeksi yang dicatat langsung yang cocok dengan filter {filter}.", "paginationLabel": "Halaman riwayat kualitas", "filterLabel": "Hasil inspeksi",
+        "filters": { "ALL": "Semua", "PASS": "PASS", "NG": "NG" },
+        "specVersion": "Spesifikasi versi {version}", "inspected": "Diinspeksi", "evidence": "Bukti tercatat", "booleanTrue": "Benar", "booleanFalse": "Salah", "acceptable": "Dapat diterima", "notAcceptable": "Tidak dapat diterima"
+      },
+      "nonconformance": {
+        "eyebrow": "Bukti ketidaksesuaian", "title": "Riwayat ketidaksesuaian",
+        "description": "Catatan ketidaksesuaian yang dicatat langsung untuk unit ini. Status siklus saat ini terpisah dari hasil inspeksi dan tidak dipengaruhi cakupan Genealogi.",
+        "loading": "Memuat riwayat ketidaksesuaian yang dicatat langsung…", "empty": "Tidak ada bukti ketidaksesuaian yang dicatat langsung untuk unit ini.",
+        "emptyFiltered": "Tidak ada ketidaksesuaian yang dicatat langsung yang cocok dengan status yang dipilih.", "paginationLabel": "Halaman riwayat ketidaksesuaian", "filterLabel": "Status siklus saat ini",
+        "filters": { "ALL": "Semua", "OPEN": "Terbuka", "IN_PROGRESS": "Sedang ditangani", "RESOLVED": "Terselesaikan", "CLOSED": "Ditutup" },
+        "status": { "OPEN": "Terbuka", "IN_PROGRESS": "Sedang ditangani", "RESOLVED": "Terselesaikan", "CLOSED": "Ditutup" },
+        "currentStatus": "Status saat ini: {status}", "detected": "Terdeteksi", "resolved": "Terselesaikan", "closed": "Ditutup", "sourceEvidence": "Bukti sumber",
+        "inspectionReference": "Referensi inspeksi", "executionReference": "Referensi eksekusi proses", "publicReference": "Referensi publik", "code": "Kode", "opened": "Dibuka", "reason": "Alasan",
+        "actionType": "Jenis tindakan", "occurred": "Terjadi", "abnormalCase": "Kasus abnormal", "resultingInspectionReference": "Referensi inspeksi hasil",
+        "relatedUnit": "Unit tertelusur terkait", "relatedUnitLink": "Lihat unit tertelusur terkait {traceCode}", "actionReference": "Referensi tindakan", "verified": "Diverifikasi",
+        "dispositionType": "Jenis disposisi", "decided": "Diputuskan", "note": "Catatan",
+        "groups": { "abnormalCases": "Kasus abnormal", "actions": "Tindakan", "verifications": "Verifikasi", "dispositions": "Disposisi" },
+        "actions": { "CORRECTION": "Koreksi", "REWORK": "Pengerjaan ulang", "REPLACEMENT": "Penggantian", "RETEST": "Pengujian ulang", "BALANCING": "Penyeimbangan", "ESCALATION": "Eskalasi" },
+        "dispositions": { "CONTINUE": "Lanjutkan", "CONCESSION": "Konsesi", "RETURN_IQC": "Kembalikan ke IQC", "SCRAP": "Afkir" },
+        "partial": "{returned} dari {total} catatan ditampilkan.", "partialNotice": "Hanya bagian terbatas dari bukti tersimpan yang ditampilkan.", "noneRecorded": "Tidak ada catatan dalam kelompok bukti ini."
+      },
+      "pagination": { "previous": "Sebelumnya", "next": "Berikutnya", "page": "Halaman {page} dari {total}" },
+      "errors": {
+        "forbiddenTitle": "Akses riwayat tidak tersedia", "forbiddenDescription": "Peran terautentikasi Anda tidak memiliki izin untuk melihat riwayat ini.",
+        "invalidTitle": "Permintaan riwayat tidak valid", "invalidDescription": "Halaman atau filter riwayat yang diminta tidak dapat diterima.",
+        "serverTitle": "Riwayat sementara tidak tersedia", "serverDescription": "Bagian riwayat ini tidak dapat dimuat. Bukti unit lainnya tetap terlihat.",
+        "networkTitle": "Tidak dapat menjangkau riwayat", "networkDescription": "Periksa koneksi layanan dan coba lagi bagian riwayat ini.",
+        "unexpectedTitle": "Respons riwayat tidak terduga", "unexpectedDescription": "Respons riwayat ini tidak dapat ditampilkan dengan aman. Bukti unit lainnya tetap terlihat.",
+        "integrityTitle": "Riwayat tersimpan tidak tersedia", "integrityDescription": "Riwayat tersimpan tidak dapat ditampilkan dengan aman.", "retry": "Coba lagi"
+      }
+    },
+    "states": {
+      "loading": "Memuat identitas unit tersimpan…",
+      "genealogyLoading": "Memuat {direction}…",
+      "invalidRouteTitle": "Kode lacak tidak valid",
+      "invalidRouteDescription": "Gunakan 1–128 huruf, angka, tanda hubung, atau garis bawah dalam URL unit.",
+      "notFoundTitle": "Unit tertelusur tidak ditemukan",
+      "notFoundDescription": "Tidak ada unit tertelusur tersimpan yang cocok dengan kode lacak kanonis ini.",
+      "forbiddenTitle": "Akses detail unit tidak tersedia",
+      "forbiddenDescription": "Peran terautentikasi Anda tidak memiliki izin untuk melihat bukti ketertelusuran ini.",
+      "invalidTitle": "Permintaan detail unit tidak valid",
+      "invalidDescription": "Kode lacak tidak dapat diterima oleh layanan ketertelusuran.",
+      "serverTitle": "Tidak dapat memuat detail unit",
+      "serverDescription": "Layanan ketertelusuran tidak dapat menyelesaikan permintaan. Coba lagi.",
+      "networkTitle": "Tidak dapat menjangkau ketertelusuran",
+      "networkDescription": "Periksa koneksi layanan dan coba muat unit kembali.",
+      "unexpectedTitle": "Respons detail unit tidak terduga",
+      "unexpectedDescription": "Respons tidak dapat ditampilkan dengan aman. Coba lagi.",
+      "forbiddenGenealogyTitle": "Akses genealogi tidak tersedia",
+      "forbiddenGenealogyDescription": "Peran terautentikasi Anda tidak memiliki izin untuk melihat bukti genealogi.",
+      "invalidGenealogyTitle": "Permintaan genealogi tidak valid",
+      "invalidGenealogyDescription": "Tinjau cakupan dan waktu genealogi yang dipilih.",
+      "serverGenealogyTitle": "Tidak dapat memuat genealogi",
+      "serverGenealogyDescription": "Arah relasi ini sementara tidak tersedia. Bukti unit lainnya tetap terlihat.",
+      "networkGenealogyTitle": "Tidak dapat menjangkau genealogi",
+      "networkGenealogyDescription": "Periksa koneksi layanan dan coba lagi arah relasi ini.",
+      "unexpectedGenealogyTitle": "Respons genealogi tidak terduga",
+      "unexpectedGenealogyDescription": "Respons relasi ini tidak dapat ditampilkan dengan aman. Bukti unit lainnya tetap terlihat.",
+      "retry": "Coba lagi"
+    },
+    "unitTypes": { "PACK": "PACK", "MODULE": "MODUL", "CELL": "SEL", "COMPONENT": "KOMPONEN", "MATERIAL": "MATERIAL" }
   },
   "Auth": {
     "brand": {

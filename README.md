@@ -23,7 +23,7 @@ Phase 1A through Phase 1F are **VERIFIED COMPLETE**. Automated regression and fi
 
 Phase 2A through Phase 2H are **VERIFIED COMPLETE**. The final manual acceptance confirmed the five applied migrations with no drift, deterministic idempotent seeding, forward/reverse and current/historical traceability, replacement/process/quality/nonconformance histories, all nine integrity checks, 10 focused traceability tests, and the complete Phase 2 regression.
 
-**Current:** Phase 3 — Authentication & RBAC is **VERIFIED COMPLETE**. Phase 3A through Phase 3I passed their required architecture, implementation, automated verification, security-hardening, and user-operated browser acceptance gates. Phase 4 — Dashboard & Traceability is **NEXT / NOT STARTED**.
+**Current:** Phase 3 — Authentication & RBAC and Phase 4 — Manufacturing Dashboard & Traceability are **VERIFIED COMPLETE**. Phase 4 final acceptance passed the integrated Overview → Search → Unit Detail → Genealogy → Process/Quality/Nonconformance journey, browser history, responsive English and Arabic RTL behavior, keyboard-visible interaction, public-data/privacy checks, and corrected point-in-time replacement evidence. Phase 5 — Quality Inspection System is **NEXT / NOT STARTED**.
 
 ## Planned MVP
 
@@ -47,7 +47,7 @@ Internationalization, security, responsive design, testing, and production readi
 - Database: PostgreSQL — Phase 1C development configuration contract established
 - Repository: a simple monorepo containing `apps/web` and `apps/api`
 
-The repository now includes the Phase 2A–2E relational model, a small deterministic Phase 2F synthetic dataset, and reusable internal Phase 2G traceability queries and integrity validation. It still has no public database-backed API or feature UI.
+The repository includes the Phase 2 relational model and deterministic synthetic dataset, Phase 3 authentication/RBAC, and the verified Phase 4 dashboard, search, Unit Detail, genealogy, and direct Process/Quality/Nonconformance history read surfaces.
 
 ## Scope boundaries
 

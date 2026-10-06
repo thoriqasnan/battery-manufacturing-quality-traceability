@@ -6,7 +6,7 @@ import { useAuth } from "./auth-provider";
 import { LoginView } from "./login-view";
 
 export function AuthGateway() {
-  const { state, isSubmitting, bootstrap, login, logout } = useAuth();
+  const { state, isSubmitting, bootstrap, login, logout, invalidateSession } = useAuth();
 
   if (state.status === "bootstrapping") return <BootstrappingView />;
   if (state.status === "error") {
@@ -22,6 +22,7 @@ export function AuthGateway() {
       error={state.error}
       isLoggingOut={isSubmitting}
       onLogout={logout}
+      onSessionInvalid={invalidateSession}
     />
   );
 }

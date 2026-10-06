@@ -48,16 +48,17 @@
     },
     "pages": {
       "overview": {
-        "title": "Manufacturing Quality & Traceability",
-        "description": "A secure role-aware workspace for manufacturing operations, quality, and product genealogy.",
+        "title": "Overview",
+        "description": "Manufacturing quality and traceability workspace.",
         "stateTitle": "Your authenticated workspace is ready",
         "stateDescription": "Dashboard and traceability capabilities will be introduced in Phase 4. No manufacturing metrics are shown until they are backed by the synthetic application data model."
       },
       "traceability": {
         "title": "Traceability",
         "description": "Product genealogy and manufacturing history workspace.",
-        "stateTitle": "Traceability is coming next",
-        "stateDescription": "Traceability search and history views will be implemented in Phase 4 using synthetic backend data."
+        "stateTitle": "Unit detail is coming next",
+        "stateDescription": "Search is available now. Unit detail and genealogy remain part of the next Phase 4 subphase.",
+        "selectedTraceCode": "Selected trace code:"
       },
       "production": {
         "title": "Production",
@@ -96,6 +97,284 @@
       "stateTitle": "Return to an available workspace",
       "stateDescription": "Navigation visibility improves usability only. Server-side authorization remains authoritative for every protected operation."
     }
+  },
+  "Dashboard": {
+    "trace": {
+      "eyebrow": "Traceability",
+      "title": "Trace a unit",
+      "description": "Enter one synthetic trace code to continue into the traceability workspace.",
+      "label": "Trace code",
+      "placeholder": "PACK-ALPHA-0001",
+      "action": "Trace unit",
+      "invalid": "Enter 1–128 letters, numbers, hyphens, or underscores.",
+      "help": "Trace codes are normalized to uppercase."
+    },
+    "states": {
+      "loading": "Loading operational overview…",
+      "errorEyebrow": "Dashboard unavailable",
+      "errorTitle": "Unable to load the operational overview",
+      "errorDescription": "The dashboard service could not be reached. Try again to request current evidence.",
+      "forbiddenTitle": "Dashboard access is not available",
+      "forbiddenDescription": "Your authenticated role does not have permission to view the operational dashboard.",
+      "retry": "Try again"
+    },
+    "summary": {
+      "eyebrow": "Operational evidence",
+      "title": "Manufacturing overview",
+      "generated": "Generated",
+      "totalUnits": "Traceable units",
+      "inProgress": "Processes in progress",
+      "inspections": "Inspection records",
+      "openNc": "Open NC cases",
+      "inProgressNc": "NC cases in progress"
+    },
+    "inventory": { "eyebrow": "Inventory", "title": "Traceable units by type" },
+    "quality": {
+      "eyebrow": "Quality evidence",
+      "title": "Inspection outcomes",
+      "pass": "PASS",
+      "ng": "NG",
+      "scopeAllRecords": "Counts cover all persisted inspection records. No yield rate is inferred.",
+      "unavailable": "Inspection evidence is currently unavailable; no zero value is implied."
+    },
+    "models": {
+      "eyebrow": "Product context",
+      "title": "Packs by product model",
+      "packs": "packs",
+      "empty": "No persisted product-model pack evidence is available."
+    },
+    "nonconformance": {
+      "eyebrow": "Nonconformance",
+      "title": "Active case context",
+      "open": "Open cases",
+      "inProgress": "In-progress cases",
+      "context": "These lifecycle counts do not represent every quality failure and do not establish an overall quality status."
+    },
+    "activity": {
+      "eyebrow": "Manufacturing history",
+      "title": "Recent manufacturing activity",
+      "attempt": "Attempt {number}",
+      "empty": "No process execution activity is available."
+    },
+    "unitTypes": { "PACK": "PACK", "MODULE": "MODULE", "CELL": "CELL", "COMPONENT": "COMPONENT", "MATERIAL": "MATERIAL" },
+    "statuses": { "IN_PROGRESS": "In progress", "COMPLETED": "Completed", "ABORTED": "Aborted" }
+  },
+  "TraceabilitySearch": {
+    "eyebrow": "Traceability",
+    "title": "Find a traceable unit",
+    "description": "Browse persisted synthetic units or narrow the evidence by trace code, unit type, and direct product model.",
+    "form": {
+      "traceCode": "Trace code",
+      "tracePlaceholder": "PACK-DEMO-ALPHA",
+      "traceHelp": "Optional exact or prefix search. Trace codes are normalized to uppercase.",
+      "traceInvalid": "Enter no more than 128 letters, numbers, hyphens, or underscores.",
+      "unitType": "Unit type",
+      "allUnitTypes": "All unit types",
+      "unitTypeHelp": "Includes packs, modules, cells, components, and materials.",
+      "productModel": "Product model code",
+      "productModelPlaceholder": "DEMO_ALPHA",
+      "productModelHelp": "Optional direct product-model filter; it does not infer descendant models.",
+      "productModelInvalid": "Enter no more than 64 letters, numbers, hyphens, or underscores.",
+      "search": "Search",
+      "clear": "Clear"
+    },
+    "results": {
+      "eyebrow": "Persisted evidence",
+      "title": "Traceable units",
+      "count": "{count} matching units",
+      "exact": "Exact match",
+      "unitTypeLabel": "Unit type:",
+      "productModel": "Direct product model",
+      "notApplicable": "Not directly assigned",
+      "created": "Recorded",
+      "lastActivity": "Latest direct activity",
+      "noActivity": "No direct activity recorded",
+      "open": "Open unit",
+      "openUnit": "Open traceable unit {traceCode}"
+    },
+    "pagination": {
+      "label": "Traceability search pages",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {page} of {totalPages}"
+    },
+    "states": {
+      "loading": "Loading persisted traceability evidence…",
+      "emptyTitle": "No traceable units matched",
+      "emptyDescription": "Adjust or clear the current trace code and filters to search again.",
+      "pageEmptyTitle": "This page has no results",
+      "pageEmptyDescription": "Return to a previous page to review the available matching units.",
+      "forbiddenTitle": "Traceability access is not available",
+      "forbiddenDescription": "Your authenticated role does not have permission to search traceability evidence.",
+      "invalidTitle": "The search request is invalid",
+      "invalidDescription": "Review the trace code, filters, and page values before trying again.",
+      "serverTitle": "Unable to load traceability evidence",
+      "serverDescription": "The traceability service could not complete the request. Try again.",
+      "networkTitle": "Unable to reach traceability",
+      "networkDescription": "Check the service connection and try the search again.",
+      "unexpectedTitle": "Unexpected traceability response",
+      "unexpectedDescription": "The response could not be safely displayed. Try again.",
+      "retry": "Try again"
+    },
+    "unitTypes": { "PACK": "PACK", "MODULE": "MODULE", "CELL": "CELL", "COMPONENT": "COMPONENT", "MATERIAL": "MATERIAL" }
+  },
+  "TraceabilityDetail": {
+    "search": {
+      "title": "Search another traceable unit",
+      "description": "Start a new trace-code search without leaving the traceability workflow.",
+      "label": "Trace code",
+      "placeholder": "PACK-DEMO-ALPHA-RETEST",
+      "help": "The search opens the existing Traceability results workspace.",
+      "invalid": "Enter 1–128 letters, numbers, hyphens, or underscores.",
+      "action": "Search units"
+    },
+    "identity": {
+      "eyebrow": "Unit identity",
+      "description": "Persisted identity and direct product context for this traceable unit.",
+      "unitType": "Unit type",
+      "productModel": "Direct product model",
+      "notAssigned": "Not directly assigned",
+      "recorded": "Recorded",
+      "updated": "Updated"
+    },
+    "evidence": {
+      "eyebrow": "Evidence availability",
+      "title": "Available records",
+      "description": "Counts confirm directly stored evidence only. They do not establish unit health, completion, or a quality outcome.",
+      "genealogy": "Direct genealogy relations",
+      "process": "Process records",
+      "quality": "Quality records",
+      "nonconformance": "Nonconformance records"
+    },
+    "genealogy": {
+      "eyebrow": "Material relationships",
+      "title": "Genealogy",
+      "description": "Review bounded persisted parent and child evidence, then open a related unit to continue tracing.",
+      "ancestors": "Parent and ancestor context",
+      "ancestorsDescription": "Current context is bounded to eight levels. Historical paths remain separate evidence paths.",
+      "descendants": "Direct children and components",
+      "descendantsDescription": "One direct level is shown by default. Open a related unit to continue downward.",
+      "noAncestors": "No parent relationship evidence exists in the selected scope.",
+      "noDescendants": "No child relationship evidence exists in the selected scope.",
+      "loadMore": "Load more relationships",
+      "loadingMore": "Loading more…",
+      "loadMoreError": "More relationships could not be loaded. Existing evidence remains visible; try again.",
+      "partialTitle": "This is a bounded view",
+      "partial": {
+        "EDGE_LIMIT": "More relationships are available. Use Load more to continue.",
+        "DEPTH_LIMIT": "Additional relationships exist beyond the requested depth. Open a related unit to continue tracing.",
+        "CYCLE_PATH_SKIPPED": "A cyclic path was omitted."
+      },
+      "cycleWarning": "A cyclic relationship path was detected and safely omitted. The remaining evidence is still shown."
+    },
+    "scope": {
+      "label": "Genealogy scope",
+      "current": "Current",
+      "historical": "Historical evidence",
+      "asOf": "As of a time",
+      "historicalNotice": "Historical evidence includes current and removed relationships. The returned paths are lineage evidence and do not imply that every relationship was active at the same time.",
+      "atLabel": "Selected date and time",
+      "atPlaceholder": "DD/MM/YYYY, HH:mm",
+      "atHelp": "Enter local time as DD/MM/YYYY, HH:mm. It is sent as one timezone-qualified instant.",
+      "atRequired": "Enter a complete date and time as DD/MM/YYYY, HH:mm before requesting as-of genealogy.",
+      "apply": "Apply time",
+      "pickerOpen": "Choose date and time",
+      "pickerClose": "Close date and time chooser",
+      "pickerLegend": "Choose date and time",
+      "pickerYear": "Year",
+      "pickerMonth": "Month",
+      "pickerDay": "Day",
+      "pickerHour": "Hour",
+      "pickerMinute": "Minute",
+      "pickerTime": "Time"
+    },
+    "relationship": {
+      "parent": "Parent relationship",
+      "child": "Child relationship",
+      "depth": "Depth {depth}",
+      "position": "Position code",
+      "installed": "Installed",
+      "removed": "Removed",
+      "current": "Current",
+      "historical": "Removed / historical",
+      "activeThenRemoved": "Active then; subsequently removed",
+      "asOfExplanation": "This relationship was active at the selected instant and was removed later."
+    },
+    "history": {
+      "attempt": "Attempt",
+      "process": {
+        "eyebrow": "Manufacturing evidence", "title": "Manufacturing history",
+        "description": "Directly recorded process executions for this unit. This history is independent of the selected Genealogy scope.",
+        "loading": "Loading directly recorded process history…", "empty": "No process execution evidence is recorded directly for this unit.",
+        "paginationLabel": "Manufacturing history pages", "method": "Actual method", "started": "Started", "finished": "Finished", "notFinished": "Not recorded", "route": "Route context", "routeContext": "Version {version}, step {step}",
+        "status": { "IN_PROGRESS": "In progress", "COMPLETED": "Completed", "ABORTED": "Aborted" },
+        "methods": { "MANUAL": "Manual", "AUTOMATED": "Automated", "HYBRID": "Hybrid" }
+      },
+      "quality": {
+        "eyebrow": "Inspection evidence", "title": "Quality history",
+        "description": "Directly recorded inspections for this unit. Inspection outcomes do not represent nonconformance lifecycle state and are independent of the Genealogy scope.",
+        "loading": "Loading directly recorded quality history…", "empty": "No quality inspection evidence is recorded directly for this unit.",
+        "emptyFiltered": "No directly recorded inspections match the selected {filter} filter.", "paginationLabel": "Quality history pages", "filterLabel": "Inspection outcome",
+        "filters": { "ALL": "All", "PASS": "PASS", "NG": "NG" },
+        "specVersion": "Specification version {version}", "inspected": "Inspected", "evidence": "Recorded evidence", "booleanTrue": "True", "booleanFalse": "False", "acceptable": "Acceptable", "notAcceptable": "Not acceptable"
+      },
+      "nonconformance": {
+        "eyebrow": "Nonconformance evidence", "title": "Nonconformance history",
+        "description": "Nonconformance records recorded directly for this unit. Current lifecycle state is separate from inspection outcome and is not affected by Genealogy scope.",
+        "loading": "Loading directly recorded nonconformance history…", "empty": "No nonconformance evidence is recorded directly for this unit.",
+        "emptyFiltered": "No directly recorded nonconformances match the selected status.", "paginationLabel": "Nonconformance history pages", "filterLabel": "Current lifecycle status",
+        "filters": { "ALL": "All", "OPEN": "Open", "IN_PROGRESS": "In progress", "RESOLVED": "Resolved", "CLOSED": "Closed" },
+        "status": { "OPEN": "Open", "IN_PROGRESS": "In progress", "RESOLVED": "Resolved", "CLOSED": "Closed" },
+        "currentStatus": "Current status: {status}", "detected": "Detected", "resolved": "Resolved", "closed": "Closed", "sourceEvidence": "Source evidence",
+        "inspectionReference": "Inspection reference", "executionReference": "Process execution reference", "publicReference": "Public reference", "code": "Code", "opened": "Opened", "reason": "Reason",
+        "actionType": "Action type", "occurred": "Occurred", "abnormalCase": "Abnormal case", "resultingInspectionReference": "Resulting inspection reference",
+        "relatedUnit": "Related traceable unit", "relatedUnitLink": "View related traceable unit {traceCode}", "actionReference": "Action reference", "verified": "Verified",
+        "dispositionType": "Disposition type", "decided": "Decided", "note": "Note",
+        "groups": { "abnormalCases": "Abnormal cases", "actions": "Actions", "verifications": "Verifications", "dispositions": "Dispositions" },
+        "actions": { "CORRECTION": "Correction", "REWORK": "Rework", "REPLACEMENT": "Replacement", "RETEST": "Retest", "BALANCING": "Balancing", "ESCALATION": "Escalation" },
+        "dispositions": { "CONTINUE": "Continue", "CONCESSION": "Concession", "RETURN_IQC": "Return to IQC", "SCRAP": "Scrap" },
+        "partial": "{returned} of {total} records shown.", "partialNotice": "Only a bounded portion of persisted evidence is displayed.", "noneRecorded": "No records are present in this evidence group."
+      },
+      "pagination": { "previous": "Previous", "next": "Next", "page": "Page {page} of {total}" },
+      "errors": {
+        "forbiddenTitle": "History access is not available", "forbiddenDescription": "Your authenticated role does not have permission to view this history.",
+        "invalidTitle": "The history request is invalid", "invalidDescription": "The requested history page or filter could not be accepted.",
+        "serverTitle": "History is temporarily unavailable", "serverDescription": "This history section could not be loaded. Other unit evidence remains visible.",
+        "networkTitle": "Unable to reach history", "networkDescription": "Check the service connection and retry this history section.",
+        "unexpectedTitle": "Unexpected history response", "unexpectedDescription": "This history response could not be safely displayed. Other unit evidence remains visible.",
+        "integrityTitle": "Stored history is unavailable", "integrityDescription": "Stored history could not be displayed safely.", "retry": "Try again"
+      }
+    },
+    "states": {
+      "loading": "Loading persisted unit identity…",
+      "genealogyLoading": "Loading {direction}…",
+      "invalidRouteTitle": "The trace code is invalid",
+      "invalidRouteDescription": "Use 1–128 letters, numbers, hyphens, or underscores in the unit URL.",
+      "notFoundTitle": "Traceable unit not found",
+      "notFoundDescription": "No persisted traceable unit matches this canonical trace code.",
+      "forbiddenTitle": "Unit detail access is not available",
+      "forbiddenDescription": "Your authenticated role does not have permission to view this traceability evidence.",
+      "invalidTitle": "The unit detail request is invalid",
+      "invalidDescription": "The trace code could not be accepted by the traceability service.",
+      "serverTitle": "Unable to load unit detail",
+      "serverDescription": "The traceability service could not complete the request. Try again.",
+      "networkTitle": "Unable to reach traceability",
+      "networkDescription": "Check the service connection and try loading the unit again.",
+      "unexpectedTitle": "Unexpected unit detail response",
+      "unexpectedDescription": "The response could not be safely displayed. Try again.",
+      "forbiddenGenealogyTitle": "Genealogy access is not available",
+      "forbiddenGenealogyDescription": "Your authenticated role does not have permission to view genealogy evidence.",
+      "invalidGenealogyTitle": "The genealogy request is invalid",
+      "invalidGenealogyDescription": "Review the selected genealogy scope and time.",
+      "serverGenealogyTitle": "Unable to load genealogy",
+      "serverGenealogyDescription": "This relationship direction is temporarily unavailable. Other unit evidence remains visible.",
+      "networkGenealogyTitle": "Unable to reach genealogy",
+      "networkGenealogyDescription": "Check the service connection and retry this relationship direction.",
+      "unexpectedGenealogyTitle": "Unexpected genealogy response",
+      "unexpectedGenealogyDescription": "This relationship response could not be safely displayed. Other unit evidence remains visible.",
+      "retry": "Try again"
+    },
+    "unitTypes": { "PACK": "PACK", "MODULE": "MODULE", "CELL": "CELL", "COMPONENT": "COMPONENT", "MATERIAL": "MATERIAL" }
   },
   "Auth": {
     "brand": {

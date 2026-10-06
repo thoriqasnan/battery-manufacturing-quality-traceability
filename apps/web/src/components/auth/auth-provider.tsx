@@ -30,6 +30,7 @@ type AuthContextValue = {
   bootstrap: () => Promise<void>;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  invalidateSession: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -107,9 +108,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [state]);
 
+  const invalidateSession = useCallback(() => {
+    setState({ status: "unauthenticated" });
+  }, []);
+
   const value = useMemo(
-    () => ({ state, isSubmitting, bootstrap, login, logout }),
-    [state, isSubmitting, bootstrap, login, logout],
+    () => ({ state, isSubmitting, bootstrap, login, logout, invalidateSession }),
+    [state, isSubmitting, bootstrap, login, logout, invalidateSession],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

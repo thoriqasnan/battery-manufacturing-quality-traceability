@@ -1,6 +1,6 @@
 # Domain Model and Workflow Requirements
 
-This document defines the validated domain. Phase 2A physically models core product/process configuration, Phase 2B traceable units/genealogy, Phase 2C manufacturing execution history, Phase 2D quality-inspection configuration/evidence, Phase 2E nonconformance action/decision history, Phase 2F deterministic synthetic examples, and Phase 2G reusable traceability/integrity queries across that model. Entity names may continue to evolve as later application behavior is refined.
+This document defines the validated domain. Phase 2A physically models core product/process configuration, Phase 2B traceable units/genealogy, Phase 2C manufacturing execution history, Phase 2D quality-inspection configuration/evidence, Phase 2E nonconformance action/decision history, Phase 2F deterministic synthetic examples, and Phase 2G reusable traceability/integrity queries across that model. Phase 4A defines the read presentation of that evidence in `docs/DASHBOARD_TRACEABILITY.md`; it does not change the domain model. Entity names may continue to evolve as later application behavior is refined.
 
 ## Separation of concerns
 
@@ -183,6 +183,18 @@ Traversal carries visited unit identities to terminate safely if malformed cycli
 Process history and quality history remain separate. Execution status describes whether work ran; inspection outcome describes quality. Attempts are chronological rows rather than rewritten state. NC reconstruction joins the original NG evidence to ordered cases, actions, linked retests, verification inspections, and all dispositions. A composed traceability view returns these focused collections together without flattening them.
 
 The integrity validator checks graph and cross-row meanings that individual database constraints cannot fully express. It does not replace the deferred Phase 2D/2E service rules for specification immutability, atomic inspection/result creation, outcome calculation, exactly-one-result enforcement, lifecycle transitions, NG-origin validation, action requirements, verification acceptance, effective disposition, cross-process rules, or authenticated actors.
+
+## Phase 4 read semantics
+
+The Phase 4 hero read begins from any traceable unit, not only a pack. Descendant traversal exposes evidenced children; ancestor traversal lets a cell, component or material discover higher-level units and packs where current or historical `GenealogyRelation` rows support that path. The UI/API must distinguish current, removed, historical and point-in-time relationships and must identify bounded or cycle-skipped traversal as partial.
+
+Genealogy/material history answers which units were related and during which interval. Process history answers which execution attempts occurred and retains execution method/status/configuration context. Quality history answers which versioned inspection and typed evidence produced PASS/NG. Nonconformance context answers which directly linked NC, case, action, verification and disposition records exist. These collections may cross-link but must never be merged into one inferred overall unit state. No NC is not PASS, PASS is not process completion, and a completed process is not proof of quality acceptance.
+
+The current schema has no generic `TraceableUnit` lifecycle status, so Phase 4 must not invent one. Likewise, descendant units do not inherit a pack's product-model field in API contracts; such ancestry may be navigated but is not persisted unit identity. Empty collections represent no available record, while unavailable computation and partial graph traversal use explicit metadata rather than misleading zeroes or completeness claims.
+
+Phase 4D implements these genealogy semantics with bounded reads. Current scope includes only relations without `removedAt`; historical scope includes all persisted relation evidence and is not a claim that all edges coexisted; point-in-time scope includes installation and excludes the removal boundary. A relation removed exactly at `T` is inactive at `T`. Traversal can branch across multiple historical parents and never fabricates a single ancestor path.
+
+Direct parent/child counts describe relationships under the requested scope and support progressive expansion. Depth or edge limits and detected cycles make the response partial explicitly. The selected unit remains identified independently from returned parent/child nodes. Section record counts on unit detail communicate evidence availability only: zero inspections is not PASS, zero NCs is not proof of accepted quality, and execution count is not a lifecycle state.
 
 ## Authenticated actor boundary
 

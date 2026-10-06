@@ -425,17 +425,113 @@ Manual acceptance, final automated regression, and source-of-truth reconciliatio
 
 ## Phase 4 — Manufacturing Dashboard & Traceability
 
-**Status: NEXT / NOT STARTED**
+**Status: VERIFIED COMPLETE — 4A–4J VERIFIED COMPLETE**
 
-- Manufacturing dashboard
-- Pack trace-code search
-- Product genealogy
-- Process timeline and history
-- Forward and appropriate reverse traceability
+Phase 4 is read-oriented and its hero capability is unified unit traceability, not generic dashboard charts. The governing design and REST/UX contracts are in [`docs/DASHBOARD_TRACEABILITY.md`](docs/DASHBOARD_TRACEABILITY.md).
+
+### Phase 4A — Dashboard & Traceability UX / Read Contracts
+
+**Status: VERIFIED COMPLETE**
+
+- Grounded the design in the actual normalized unit/genealogy, process-execution, typed inspection, nonconformance, authorization and locale models.
+- Defined the one-trace-code journey from any pack, module, cell, component or material, including bounded descendant and ancestor traversal.
+- Kept genealogy, process, quality and nonconformance meanings distinct; current, removed, historical and as-of relationships are explicit.
+- Selected a hybrid read API: lightweight detail/availability shell plus independently paged genealogy and history resources.
+- Defined evidence-backed overview metrics, deterministic search/filter/pagination, stable empty/error semantics, authorization, performance bounds, responsive/accessibility behavior and the public synthetic-data boundary.
+- Rejected a fabricated unit status, ungrounded KPIs/trends and eager whole-graph rendering. No endpoint, schema, production query or UI was implemented.
+
+### Phase 4B — Backend Dashboard Read Models
+
+**Status: VERIFIED COMPLETE**
+
+- Added authenticated `GET /dashboard/overview` with explicit API read-model types and backend-enforced `dashboard:view`; the existing role matrix and explicit ADMIN limits are unchanged.
+- Added set-based database aggregates for all traceable-unit types, packs by product model, in-progress executions, all-record inspection outcomes, and open/in-progress NC lifecycle states.
+- Added a maximum-ten recent process-execution list ordered by `startedAt DESC`, `attemptNumber DESC`, and internal ID only as a deterministic unexposed tie-breaker.
+- Empty databases produce successful, ordered zero counts and empty arrays. Quality declares `ALL_RECORDS`; successful zero counts mean no persisted rows, while database failures remain errors rather than fabricated data.
+- Added focused unit/E2E coverage for empty semantics, database-derived seed evidence, deterministic bounds/order, authentication, permission metadata/policy, and private/internal-field exclusion.
+- TypeScript, lint, 5 dashboard tests, 10 authorization tests, 27 backend E2E tests, production build, Phase 2 traceability integrity regression, privacy review, fixture cleanup, and diff checking passed.
+
+### Phase 4C — Traceability Search API
+
+**Status: VERIFIED COMPLETE**
+
+- Added authenticated `GET /traceability`, protected by `traceability:view`, with explicit query and response read models and stable `INVALID_REQUEST` validation errors.
+- Added trimmed uppercase exact/prefix trace-code search, blank browse mode, direct `unitType` and direct product-model-code filters, 1-based pagination (25 default, 100 maximum), exact-first ranking, and deterministic trace-code/internal-ID ordering without exposing IDs.
+- Product-model filtering intentionally follows only the nullable direct `TraceableUnit.productModel` relationship. Under the database constraint this returns packs and performs no inferred genealogy traversal.
+- Search rows expose trace code, unit type, nullable direct product model, persistence creation time, nullable latest directly recorded activity time, and exact/prefix/null match context. No unit/quality status, current process, parent/pack inference, raw Prisma object, or internal key is returned.
+- Page activity is computed with three bounded group aggregates rather than N+1 queries. Exact/count/page selection stays in PostgreSQL and never loads the full collection into Node.
+- PostgreSQL plans on the 16-unit seed reasonably chose sub-millisecond sequential scans; the existing unique trace-code index supports exact index-only lookup and ordered prefix scanning when index paths are considered. Product code used its unique index. No schema, migration, or speculative index was added.
+- All 24 focused parser/E2E tests passed, covering authorization metadata, normalization, exact/prefix/no-substring behavior, filters, browse, bounds, deterministic ordering, empty pages, errors, and privacy.
+- Final verification passed: TypeScript, lint, 10 traceability/integrity tests, 10 authorization tests, 5 dashboard tests, 39 sequential isolated E2E tests, production build, fixture cleanup, privacy review, and diff checking. The general E2E runner is intentionally file-sequential so temporary database fixtures cannot alter another suite's global aggregate assertions.
+
+### Phase 4D — Unit Detail & Genealogy API
+
+**Status: VERIFIED COMPLETE**
+
+- Added normalized authenticated `GET /traceability/:traceCode` identity/section-count and `GET /traceability/:traceCode/genealogy` reads, both protected by `traceability:view` with stable malformed/not-found errors.
+- Unit detail exposes only direct persisted identity plus exact direct genealogy, process, inspection, and NC record counts; zero counts never imply status, PASS, or completion.
+- Added parameterized recursive ancestor/descendant reads with `current`, `historical`, and `asOf` scopes; depth defaults to 1 and is capped at 8, while edge pages default to 50 and cap at 100.
+- Added stable ordering, opaque scope-bound cursors, direct parent/child counts for progressive disclosure, explicit edge/depth partial reasons, hashed opaque relation references, and no internal UUID exposure.
+- Traversal records visited UUID paths, emits `CYCLE_PATH_SKIPPED`, and terminates corrupt cyclic paths rather than looping or presenting them as clean evidence.
+- Verified current/removed history and exact point-in-time semantics: `installedAt <= at AND (removedAt IS NULL OR removedAt > at)`.
+- PostgreSQL plans on the 16-unit seed completed root lookup and bounded ancestor/descendant CTEs below one millisecond. Existing trace-code and both directional genealogy indexes remain appropriate; no schema/migration/index change was justified.
+- All 15 focused database-backed tests passed, including normalized detail, section counts, both directions/depths, maximum depth, scope/time boundaries, isolated units, 101-edge pagination, cursor scoping, deterministic order, explicit cycle handling, authorization, errors, and privacy.
+- Final regression passed: TypeScript, lint, 10 Phase 2 traceability/integrity tests, 5 dashboard tests, 24 search tests, 10 authorization tests, 54 sequential backend E2E tests, production build, test-fixture cleanup, public-data/privacy review, and diff checking.
+
+### Phase 4E — Overview Dashboard UI
+
+**Status: VERIFIED COMPLETE**
+
+- Replaced the Overview readiness placeholder with a responsive operational dashboard that consumes only authenticated `GET /dashboard/overview` evidence.
+- Added a prominent Trace a Unit action whose controlled value immediately normalizes typed and pasted input to uppercase, then preserves the public trim and 1–128 safe-character validation contract for navigation. The Overview includes complete inventory/product/process/quality/nonconformance summaries and bounded recent activity without client-derived KPIs, trends, charts, yield, or throughput.
+- Added explicit loading, recoverable error, forbidden, zero, empty, and unavailable-evidence states; a dashboard `401` invalidates the existing in-memory session.
+- Added complete English and Indonesian dashboard copy, locale-aware number/time formatting, registered-locale English fallback compatibility, logical RTL-safe layout, semantic headings/lists/definitions, textual status meaning, visible focus, and mobile stacking. Mixed-direction technical values are isolated; the generated label and locale-formatted timestamp use separate bidi runs. The narrow header preserves the complete current context while retaining a labelled, keyboard-accessible, 44px-high compact locale selector.
+- Final automated verification passed 5 focused dashboard backend tests, 10 authorization tests, all 54 sequential backend E2E tests, 43 relevant frontend tests, backend/frontend TypeScript and lint, both production builds, and `git diff --check`.
+- Manual Safari acceptance passed lowercase/mixed-case typing and paste normalization, unchanged uppercase and invalid-character/query behavior, coherent Arabic RTL generated time/trace codes/KPI values at mobile and wider widths, and the complete `OVERVIEW` / `Overview` context with a usable locale selector at approximately 375×812 without observed overlap or horizontal overflow. English fallback remains intentional for untranslated Arabic Phase 4E copy.
+
+### Phase 4F — Traceability Search UI
+
+**Status: VERIFIED COMPLETE**
+
+- Replaced the shell placeholder with authenticated, runtime-validated consumption of the verified Phase 4C `GET /traceability` contract. Blank criteria perform bounded persisted browse; optional controlled trace-code and product-model inputs canonicalize typing/paste to uppercase.
+- Added exact/prefix search, unit-type and direct product-model filters, fixed 25-row numbered pagination, URL initialization/canonicalization, Clear-to-browse, browser-history restoration, loading/forbidden/retry/invalid/empty/page-past-end states, and responsive persisted-evidence record cards without invented unit status or inferred model ancestry.
+- True zero totals retain the query/filter context and accessible no-match message while omitting pagination. Normal one-page and multi-page behavior is unchanged.
+- Added complete English and Indonesian copy with intentional English fallback for other registered locales. Trace/model codes remain isolated LTR values; locale-formatted timestamps are atomic non-wrapping auto-direction bidi runs for Arabic RTL safety.
+- Added `/[locale]/traceability/[traceCode]` as an authenticated non-404 destination for result links. It preserves shell/Traceability context and shows only the selected isolated code plus a localized “Unit detail is coming next” message. It does not fetch Phase 4D detail/genealogy and is not Phase 4G implementation.
+- Final verification passed 30 focused frontend tests, all 62 frontend regression tests, 24 Phase 4C parser/E2E tests, frontend TypeScript and ESLint, the webpack production build with the nested route present, and `git diff --check`.
+- Manual Safari acceptance passed the 16-unit persisted browse, Overview deep link, uppercase typing/paste, exact/prefix search, supported filters and direct-model semantics, URL Clear/Back behavior, zero-result correction, nested destination, English/Indonesian/fallback presentation, 375×812 responsive behavior, and Arabic RTL identifiers and timestamps at mobile and wider widths.
+
+### Phase 4G — Unit Detail & Genealogy UI
+
+**Status: VERIFIED COMPLETE**
+
+- Replaced the nested trace-code placeholder with authenticated, runtime-validated Unit Detail backed by the Phase 4D detail and genealogy APIs. It renders persisted identity, direct product context, recorded/updated times, and direct evidence-availability counts without inventing health, completion, PASS/NG, or inherited product context.
+- Added independently loaded bounded ancestor and direct-child evidence with related-unit links, cursor continuation, explicit empty/partial/cycle states, and direction-specific retry behavior. Current, historical, and point-in-time scopes preserve installed/removed evidence and the inclusive-install/exclusive-removal temporal contract.
+- Added URL-addressable scope and timezone-qualified as-of state. The application-controlled `DD/MM/YYYY, HH:mm` editor provides semantic Day/Month/Year/Hour/Minute segments, valid auto-advance, calendar clamping, a synchronized bounded chooser, and no native Safari datetime picker.
+- Scope and as-of query transitions preserve viewport position while retaining push/Back/Forward semantics. Locale changes retain the full investigation query and use a bounded transient in-memory viewport handoff across the root locale-layout remount; no persistent browser storage or document reload is used.
+- Added a compact Search another traceable unit action that reuses Phase 4F canonical uppercase validation and URL-driven search rather than duplicating search behavior.
+- English and Indonesian copy, intentional fallback locales, Arabic RTL with LTR-isolated technical values, bidi-isolated timestamps, keyboard semantics, and the responsive 375×812 card layout passed manual Safari acceptance.
+- Final frontend verification passed 64 focused tests, all 96 frontend regression tests, TypeScript, ESLint, the webpack production build with the dynamic nested route, and `git diff --check`. Manual acceptance passed identity/counts, current/historical/as-of genealogy, replacement evidence, related-unit traversal, URL/history behavior, segmented date/time UX, locale/scope viewport preservation, quick search, mobile, localization, and RTL.
+
+### Phase 4H–4J
+
+- **4H — Process, Quality & Nonconformance History API/UI:** VERIFIED COMPLETE
+  - **4H-1 — Backend Public History Contracts:** VERIFIED COMPLETE. Defines bounded query/response contracts, strict discriminated inspection evidence, separate NC lifecycle/history aggregates, explicit nested partial metadata, deterministic opaque references, and future repository ordering. At that checkpoint no history endpoint was operational.
+  - **4H-2 — Bounded Repository & Service Reads:** VERIFIED COMPLETE. Direct-unit database reads use bounded count/page queries, deterministic ordering, strict typed evidence mapping, 100-record nested NC caps with truthful partial metadata, and consistent opaque cross-references. At that checkpoint no controller route was registered.
+  - **4H-3 — Controller & HTTP Exposure:** VERIFIED COMPLETE. Three bounded authenticated GET endpoints expose direct-unit process, typed quality, and NC aggregate evidence through the verified contracts. They preserve canonical trace/error semantics, opaque cross-references, safe integrity-failure responses, and passed database-backed HTTP E2E verification. All legitimate roles currently hold `traceability:view`; route metadata and 401 behavior were verified without fabricating a denied role, while the shared authorization suite continues to prove real 403 enforcement.
+  - **4H-4 — Frontend Typed History Client & Runtime Validation:** VERIFIED COMPLETE. Adds bounded authenticated clients for all three history APIs, exact successful-response validation, strict typed quality evidence, NC nested-count invariants, opaque-reference validation, and safe public error-code preservation. Malformed successful responses fail rather than becoming empty evidence; at that checkpoint the clients were not yet integrated into Unit Detail.
+  - **4H-5 — Process + Quality History UI:** VERIFIED COMPLETE. Unit Detail now shows independently loaded and paginated direct-unit manufacturing and inspection evidence. Process lifecycle remains neutral; Quality preserves explicit PASS/NG and numeric, Boolean, categorical, visual, and text evidence. All/PASS/NG filtering, truthful empty/error states, section-local retry, safe integrity failure, localization, RTL, responsive cards, genealogy independence, and the accepted Quick Search typography revisions passed automated and browser acceptance.
+  - **4H-6 — Nonconformance History UI:** VERIFIED COMPLETE. Unit Detail now shows independently loaded, paginated, direct-unit NC evidence with current lifecycle filtering; separate abnormal-case, action, verification, and disposition disclosures; truthful partial metadata; opaque source references; related-unit navigation; and safe empty/error/Retry states. Manual acceptance passed the simple and escalated fixtures, direct-empty units, Genealogy independence, localization/RTL, keyboard-native disclosure behavior, and 375×812 responsiveness. A transient locale handoff preserves the exact disclosure combination across locale subtree remounts without persistent storage or focus hijacking.
+  - **4H-7 — Integration Verification / Failure Isolation:** VERIFIED COMPLETE. Integration discovery found no production defect, so production code remained unchanged. Deterministic component tests prove section-local NC failure and Retry behavior, safe NC integrity-error presentation, and preservation of populated Process, Quality, and NC siblings when another history request fails. This test-only scope required no additional browser acceptance because the underlying browser behavior passed manual acceptance in 4H-5 and 4H-6; no destructive error injection was performed.
+- **4I — Integration / Responsive / Accessibility:** VERIFIED COMPLETE. Integration review preserved the existing semantic, keyboard, focus, locale, RTL/bidi, and independently loaded evidence architecture. Traceability Search now keeps its filter form stacked through unsafe intermediate widths before activating the bounded four-column layout at `xl`; Overview renders process `COMPLETED` as neutral lifecycle evidence rather than green PASS/health evidence. Manual acceptance then found and verified the minimal Revision 1 correction that likewise delays Unit Detail Quick Search's horizontal composition, prose cap, and fixed form width until `xl`. English intermediate widths, Arabic RTL intermediate widths, and wide-desktop Quick Search passed targeted browser acceptance without clipping or horizontal overflow. Final broad browser, assistive-technology, and privacy acceptance remains 4J.
+- **4J — Manual Acceptance & Final Reconciliation:** VERIFIED COMPLETE. Final browser acceptance passed the English integrated hero journey, genealogy scope/URL and Back/Forward restoration, Arabic RTL locale remount with exact disclosure-state preservation and related-unit navigation, responsive and keyboard-visible accessibility checks, and public-data/privacy sanity. Corrected as-of acceptance used the direct replacement root `MODULE-DEMO-ALPHA-RETEST-01`: Jakarta local `11/01/2026 17:00` serialized to `2026-01-11T10:00:00.000Z` and showed both cells plus `COMP-DEMO-OLD`, while `19:00` serialized to `12:00Z` and showed both cells plus `COMP-DEMO-NEW`. The pack directly owns only the module at depth one.
+  - Investigation found a genuine absolute-time boundary defect: the installed PostgreSQL adapter emitted timezone-less Date parameters that the former `Asia/Jakarta` session interpreted seven hours earlier. A shared `PrismaPg` factory now establishes UTC for every project-owned runtime/seed connection. Database-side epoch coverage proves `2026-01-11T08:00:00Z` persists as epoch `1768118400` and remains correct through upsert/update.
+  - The local deterministic development database was reconciled once through `npm run db:seed`, without reset or manual patching. All reference UTC timestamps, fixed parent/child/position identities, unique relationships, and nine integrity checks passed. The frontend local-wall-clock-to-qualified-ISO behavior and inclusive-install/exclusive-removal predicate remained unchanged.
+  - Final backend/frontend regression, builds, type checks, lint, public portfolio/confidentiality review, source-of-truth reconciliation, and diff hygiene passed. Phase 4 is **VERIFIED COMPLETE**.
 
 ## Phase 5 — Quality Inspection System
 
-**Status: PLANNED**
+**Status: NEXT / NOT STARTED**
 
 - Inspection specifications
 - Inspection entry

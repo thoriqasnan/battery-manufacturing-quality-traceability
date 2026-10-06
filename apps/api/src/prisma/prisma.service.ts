@@ -1,6 +1,6 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
-import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client.js';
+import { createPrismaPgAdapter } from './prisma-pg.js';
 
 @Injectable()
 export class PrismaService implements OnModuleDestroy {
@@ -14,7 +14,7 @@ export class PrismaService implements OnModuleDestroy {
         throw new Error('DATABASE_URL is required before database access.');
       }
 
-      const adapter = new PrismaPg({ connectionString });
+      const adapter = createPrismaPgAdapter(connectionString);
       this.prismaClient = new PrismaClient({ adapter });
     }
 

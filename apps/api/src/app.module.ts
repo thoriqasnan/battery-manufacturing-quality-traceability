@@ -5,9 +5,15 @@ import { AuthenticationModule } from './auth/authentication.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { TraceabilityModule } from './traceability/traceability.module.js';
 import { SecurityHeadersMiddleware } from './config/security-headers.middleware.js';
+import { DashboardModule } from './dashboard/dashboard.module.js';
 
 @Module({
-  imports: [AuthenticationModule, PrismaModule, TraceabilityModule],
+  imports: [
+    AuthenticationModule,
+    PrismaModule,
+    TraceabilityModule,
+    DashboardModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

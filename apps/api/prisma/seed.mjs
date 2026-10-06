@@ -1,5 +1,5 @@
-import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../dist/src/generated/prisma/client.js';
+import { createPrismaPgAdapter } from '../dist/src/prisma/prisma-pg.js';
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -8,7 +8,7 @@ if (!connectionString) {
 }
 
 const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString }),
+  adapter: createPrismaPgAdapter(connectionString),
 });
 const date = (value) => new Date(value);
 const ownedId = (group, number) =>
