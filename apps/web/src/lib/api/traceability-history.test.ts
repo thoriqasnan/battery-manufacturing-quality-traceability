@@ -114,6 +114,21 @@ describe("traceability history quality client", () => {
     await expect(fetchQualityHistory("PACK-DEMO")).resolves.toMatchObject({ items: [{ evidence, outcome }] });
   });
 
+  it("preserves linked and null optional process-execution context without exposing an internal identifier", async () => {
+    successful({ items: [qualityItem({ type: "BOOLEAN", value: true })], page });
+    await expect(fetchQualityHistory("PACK-DEMO")).resolves.toMatchObject({
+      items: [{ processExecutionRecordId: "exec_public-reference" }],
+    });
+
+    successful({
+      items: [{ ...qualityItem({ type: "BOOLEAN", value: true }), processExecutionRecordId: null }],
+      page,
+    });
+    await expect(fetchQualityHistory("PACK-DEMO")).resolves.toMatchObject({
+      items: [{ processExecutionRecordId: null }],
+    });
+  });
+
   it.each([
     ["unknown outcome", { ...qualityItem({ type: "BOOLEAN", value: true }), outcome: "UNKNOWN" }],
     ["unknown result type", { ...qualityItem({ type: "BOOLEAN", value: true }), resultType: "BINARY" }],

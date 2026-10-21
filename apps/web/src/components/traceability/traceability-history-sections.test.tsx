@@ -98,6 +98,28 @@ describe("Phase 4H-5 process and quality history UI", () => {
     expect(screen.getByText("Synthetic persisted note")).toBeVisible();
     expect(screen.getAllByText("PASS").length).toBeGreaterThan(0);
     expect(screen.getAllByText("NG").length).toBeGreaterThan(0);
+    expect(screen.getByText("No nonconformance evidence is recorded directly for this unit.")).toBeVisible();
+  });
+
+  it("preserves an inspection's exact historical identity, attempt, occurrence time, and null execution context", async () => {
+    const historicalInspection = {
+      ...quality("insp_historical", "PASS", { type: "NUMERIC", value: "12.500000", unitCode: "V" }),
+      specification: { code: "DEMO_NUMERIC_LEVEL", version: 3 },
+      processExecutionRecordId: null,
+      attemptNumber: 7,
+      inspectedAt: "2026-10-10T05:00:00.000Z",
+    };
+    vi.stubGlobal("fetch", historyFetch(page([processItem]), page([historicalInspection])));
+    renderSections();
+
+    const qualityHeading = await screen.findByRole("heading", { name: "Quality history" });
+    expect(qualityHeading).toHaveAttribute("id", "quality-history-title");
+    const card = (await screen.findByRole("heading", { name: "DEMO_NUMERIC_LEVEL" })).closest("article")!;
+    expect(within(card).getByText(/Specification version 3/)).toBeVisible();
+    expect(within(card).getByText("7")).toBeVisible();
+    expect(within(card).getByText("12.500000")).toBeVisible();
+    expect(within(card).getByText("V")).toBeVisible();
+    expect(card.querySelector('time[datetime="2026-10-10T05:00:00.000Z"]')).toBeInTheDocument();
   });
 
   it("renders truthful direct-unit empty states without zero-result pagination", async () => {

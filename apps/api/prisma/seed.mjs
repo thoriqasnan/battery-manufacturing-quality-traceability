@@ -625,7 +625,7 @@ async function seed() {
           upperBound: '20.000000',
           unitCode: 'DEMO_UNIT',
           expectedBooleanValue: null,
-          isActive: true,
+          lifecycle: 'PUBLISHED',
         },
         {
           id: specification.boolean,
@@ -641,7 +641,7 @@ async function seed() {
           upperBound: null,
           unitCode: null,
           expectedBooleanValue: true,
-          isActive: true,
+          lifecycle: 'PUBLISHED',
         },
         {
           id: specification.categorical,
@@ -657,7 +657,7 @@ async function seed() {
           upperBound: null,
           unitCode: null,
           expectedBooleanValue: null,
-          isActive: true,
+          lifecycle: 'PUBLISHED',
         },
         {
           id: specification.visual,
@@ -673,7 +673,7 @@ async function seed() {
           upperBound: null,
           unitCode: null,
           expectedBooleanValue: null,
-          isActive: true,
+          lifecycle: 'PUBLISHED',
         },
         {
           id: specification.text,
@@ -689,7 +689,7 @@ async function seed() {
           upperBound: null,
           unitCode: null,
           expectedBooleanValue: null,
-          isActive: true,
+          lifecycle: 'PUBLISHED',
         },
       ])
         await upsertById(tx.inspectionSpecification, row);

@@ -103,6 +103,56 @@ describe("traceability search", () => {
     expect(clearButton).not.toHaveClass("lg:flex-none");
   });
 
+  it("shows three fictional reviewer samples in a compact responsive disclosure", async () => {
+    fetchMock.mockResolvedValueOnce(response(200, searchResponse()));
+    renderSearch();
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByText("Try a fictional sample"));
+    expect(screen.getByText("These curated portfolio records demonstrate distinct traceability and quality histories.")).toBeVisible();
+    expect(screen.getAllByRole("button", { name: /^Use sample / })).toHaveLength(3);
+    expect(screen.getByRole("button", { name: /PACK-DEMO-ALPHA-PASS: Clean PASS/ })).toBeVisible();
+    expect(screen.getByRole("button", { name: /PACK-DEMO-ALPHA-RETEST: NG followed by PASS retest/ })).toBeVisible();
+    const escalated = screen.getByRole("button", { name: /PACK-DEMO-BETA-ESCALATED: Escalated NC and rework/ });
+    expect(escalated).toBeVisible();
+    expect(escalated.closest("ul")).toHaveClass("grid", "min-w-0", "lg:grid-cols-3");
+  });
+
+  it("fills only the trace input and preserves filters until the user submits", async () => {
+    fetchMock.mockResolvedValueOnce(response(200, searchResponse())).mockResolvedValueOnce(response(200, searchResponse()));
+    renderSearch();
+    const user = userEvent.setup();
+    await screen.findByRole("heading", { name: "Traceable units" });
+    await user.selectOptions(screen.getByRole("combobox", { name: "Unit type" }), "PACK");
+    await user.type(screen.getByRole("textbox", { name: "Product model code" }), "demo_alpha");
+    await user.click(screen.getByText("Try a fictional sample"));
+    await user.click(screen.getByRole("button", { name: /PACK-DEMO-ALPHA-RETEST: NG followed by PASS retest/ }));
+
+    expect(screen.getByRole("textbox", { name: "Trace code" })).toHaveValue("PACK-DEMO-ALPHA-RETEST");
+    expect(screen.getByRole("combobox", { name: "Unit type" })).toHaveValue("PACK");
+    expect(screen.getByRole("textbox", { name: "Product model code" })).toHaveValue("DEMO_ALPHA");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(push).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Search" }));
+    expect(push).toHaveBeenCalledWith("/traceability?query=PACK-DEMO-ALPHA-RETEST&unitType=PACK&productModel=DEMO_ALPHA");
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  });
+
+  it("supports keyboard sample selection with a visible focus contract", async () => {
+    fetchMock.mockResolvedValueOnce(response(200, searchResponse()));
+    renderSearch();
+    const user = userEvent.setup();
+    await user.click(await screen.findByText("Try a fictional sample"));
+    const sample = screen.getByRole("button", { name: /PACK-DEMO-BETA-ESCALATED: Escalated NC and rework/ });
+    sample.focus();
+    expect(sample).toHaveFocus();
+    expect(sample).toHaveClass("focus-visible:ring-2", "focus-visible:ring-blue-300");
+    await user.keyboard("{Enter}");
+    expect(screen.getByRole("textbox", { name: "Trace code" })).toHaveValue("PACK-DEMO-BETA-ESCALATED");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("consumes and canonicalizes a query-param initialized search", async () => {
     currentSearch = "query=pack-demo-alpha&unitType=pack&productModel=demo_alpha";
     fetchMock.mockResolvedValueOnce(response(200, searchResponse()));
@@ -223,6 +273,9 @@ describe("traceability search", () => {
     expect(await screen.findByRole("heading", { name: "Temukan unit tertelusur" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Cari" })).toBeVisible();
     expect(screen.getByRole("navigation", { name: "Halaman pencarian ketertelusuran" })).toBeVisible();
+    const user = userEvent.setup();
+    await user.click(screen.getByText("Coba sampel fiktif"));
+    expect(screen.getByRole("button", { name: /PACK-DEMO-ALPHA-RETEST: NG diikuti uji ulang PASS/ })).toBeVisible();
   });
 
   it("uses English fallback with RTL-safe technical values for Arabic", async () => {
@@ -232,6 +285,14 @@ describe("traceability search", () => {
     expect(await screen.findByRole("heading", { name: "Find a traceable unit" })).toHaveAttribute("dir", "auto");
     expect(screen.getByRole("textbox", { name: "Trace code" })).toHaveAttribute("dir", "ltr");
     expect(screen.getByText("PACK-DEMO-ALPHA-PASS", { selector: "bdi" })).toHaveAttribute("dir", "ltr");
+    const user = userEvent.setup();
+    await user.click(screen.getByText("Try a fictional sample"));
+    const sampleCodes = screen.getAllByLabelText(/^PACK-DEMO-/);
+    expect(sampleCodes).toHaveLength(3);
+    sampleCodes.forEach((code) => {
+      expect(code).toHaveAttribute("dir", "ltr");
+      expect(code).toHaveClass("max-w-full", "break-words", "[word-break:normal]");
+    });
     const timestamps = screen.getAllByRole("time");
     timestamps.forEach((time) => {
       const isolatedTimestamp = within(time).getByText(/.+/, { selector: "bdi" });

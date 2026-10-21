@@ -9,12 +9,12 @@ The only unauthenticated non-auth-contract behavior remains the minimal health e
 From `apps/api`:
 
 ```bash
-npm run start:dev
+node --env-file=.env ./node_modules/.bin/nest start --watch
 ```
 
-The API listens on `http://localhost:3001` by default. Set `PORT` to override it.
+The API listens on `http://localhost:3001` by default. Set `PORT` to override it. The explicit Node environment loader is required because Nest does not automatically read `apps/api/.env`; `/health` can remain available while a later database-backed request fails if `DATABASE_URL` was not loaded. See the repository [Local Development and Manual Testing guide](../../docs/LOCAL_DEVELOPMENT_AND_TESTING.md) for safe PostgreSQL setup, complete startup, acceptance login, and troubleshooting.
 
-The credentialed browser CORS boundary accepts only `FRONTEND_ORIGIN`. Development defaults to `http://localhost:3000`; production requires an explicit valid HTTP(S) origin. Copy `.env.example` to an ignored local environment file and export the values using your preferred environment loader. The policy does not allow a wildcard. `AUTH_CSRF_SECRET` is backend-only and rejects the tracked placeholder.
+The credentialed browser CORS boundary accepts only `FRONTEND_ORIGIN`. Development defaults to `http://localhost:3000`; production requires an explicit valid HTTP(S) origin. The restricted request-header allowlist includes `Content-Type`, `X-CSRF-Token`, and the `Idempotency-Key` required by `POST /inspections`; a focused NestJS OPTIONS test protects that browser preflight contract. Copy `.env.example` to an ignored local environment file and export the values using your preferred environment loader. The policy does not allow a wildcard. `AUTH_CSRF_SECRET` is backend-only and rejects the tracked placeholder.
 
 Production login attempts are limited to ten per client address per minute using bounded process-local state. A multi-instance deployment must replace or supplement this with shared edge/gateway limiting and reviewed proxy trust. API responses use explicit content-type, framing/CSP, referrer, and browser-permission headers. HSTS remains the responsibility of the confirmed HTTPS termination boundary.
 
@@ -53,9 +53,62 @@ psql "$DATABASE_URL" -c "select current_database(), current_user;"
 
 Do not use production credentials for local development.
 
+### Isolated integration-test database
+
+Database-backed integration and E2E tests must not use the active development database. The local isolated target is `battery_quality_traceability_test`, owned by the existing `battery_quality_app` role and initialized independently from the development database. It is created empty, receives only the repository migrations and deterministic synthetic reference seed, and must never be cloned from or silently fall back to `battery_quality_traceability_dev`.
+
+Supply its connection string explicitly for each setup or test command; do not replace the ignored development `.env` file:
+
+```bash
+export BMQT_TEST_DATABASE_URL='postgresql://battery_quality_app:LOCAL_PASSWORD@localhost:5432/battery_quality_traceability_test'
+
+DATABASE_URL="$BMQT_TEST_DATABASE_URL" npm run test:db:guard
+DATABASE_URL="$BMQT_TEST_DATABASE_URL" npx prisma migrate deploy
+DATABASE_URL="$BMQT_TEST_DATABASE_URL" npm run db:seed
+```
+
+`npm run test:db:guard` connects through the effective `DATABASE_URL`, executes `SELECT current_database()`, and requires the exact name `battery_quality_traceability_test`. It exits before a following mutating command when the connection resolves to any other database. Run it immediately before every database-backed suite, preserving the same explicit environment:
+
+```bash
+DATABASE_URL="$BMQT_TEST_DATABASE_URL" npm run test:db:guard && \
+DATABASE_URL="$BMQT_TEST_DATABASE_URL" npm run test:inspection-entry-e2e
+```
+
+The guard does not create, migrate, seed, reset, truncate, or clean a database. Database creation remains an explicit local administrator action. Passwords and full connection strings stay outside Git.
+
+Phase 5F-1 adds a dedicated cross-layer suite whose package command and test process both enforce the exact database identity before any fixture cleanup or creation:
+
+```bash
+DATABASE_URL="$BMQT_TEST_DATABASE_URL" npm run test:phase5f-history-integration
+```
+
+The test uses prefix-owned temporary records and proves the real secured inspection POST, atomic persisted result/submission, exact Quality History append, Process History execution correlation and stability, null execution support, no automatic Nonconformance, unchanged reference NC/genealogy history, same-key replay without duplication, authorization, and public privacy. Cleanup restores the deterministic reference vector and verifies integrity 9/9. It does not reset or reseed either database.
+
 ## Prisma foundation
 
 Prisma is the API's ORM/data-access tooling for PostgreSQL. The schema contains the verified Phase 2A–2E manufacturing/quality persistence model and configures ESM client generation; the five ordered migrations are the database history for that model.
+
+Phase 5B-2 adds the eighth ordered migration, `20261006000000_phase_5b2_quality_persistence`. It replaces inspection-specification `isActive` with the `DRAFT`/`PUBLISHED`/`RETIRED` lifecycle, preserves the reference specifications as `PUBLISHED`, adds nullable restrictive inspector attribution for legacy-compatible inspections, and adds restrictive durable `InspectionSubmission` idempotency persistence. It also adds the explicit ENGINEERING-only `inspection-specification:manage` permission. No quality controller, service, endpoint, or UI is implemented at this checkpoint.
+
+Phase 5C-2 adds read-only inspection-specification services. ENGINEERING uses `GET /inspection-specifications` and `GET /inspection-specifications/:code/versions/:version` with `inspection-specification:manage`; QUALITY uses the separate `GET /inspection-specifications/discovery` and `GET /inspection-specifications/discovery/:code/versions/:version` surface with `inspection:write`. Lists are one-based, default to 25, cap at 100, and expose no internal IDs. Discovery is always PUBLISHED-only and hides DRAFT/RETIRED exact identities as not found. Management detail includes a strong canonical ETag for future mutation preconditions, but Phase 5C-2 implements no write route or `If-Match` handling.
+
+Phase 5C-3 adds ENGINEERING-only version-1 DRAFT creation, full DRAFT replacement, publication, and retirement. Replacement and lifecycle transitions require the current strong ETag in `If-Match`, serialize the exact public `(code, version)` through a transaction-scoped advisory lock, and return the resulting representation with a fresh ETag. Creation and complete categorical/visual option replacement are atomic; public process/route-step references resolve server-side. No new-version endpoint, public delete, inspection entry, or frontend is included.
+
+Phase 5C-4 adds ENGINEERING-only `POST /inspection-specifications/:code/versions`. Its strict body selects an exact PUBLISHED or RETIRED `sourceVersion`; the server acquires the shared normalized family lock, allocates `max + 1`, and atomically creates a DRAFT copy with fresh option ownership. It never mutates the source or repoints inspection history, and returns the public copy with a fresh strong ETag. Clients cannot select the target version or override configuration.
+
+Phase 5C-5 verifies the complete specification service through the real HTTP application boundary. ENGINEERING management, QUALITY PUBLISHED-only discovery, negative ADMIN/PRODUCTION access, strong ETag/lifecycle behavior, PostgreSQL concurrency, version-history preservation, all five typed configurations, reference integrity, privacy, safe errors, and full backend regression pass. Phase 5C is verified complete.
+
+Phase 5D-1 approves the atomic inspection-entry contract. Phase 5D-2 adds pure utilities only: strict normalized request and `Idempotency-Key` parsing, exact decimal handling, five-type evaluation, Unicode-safe TEXT and timezone-qualified timestamp handling, canonical request fingerprints, and deterministic attempt/idempotency advisory-lock keys.
+
+Phase 5D-3 adds the internal transactional inspection-entry service. It performs durable idempotent replay/conflict handling, coordinates exact PUBLISHED lifecycle, validates transaction time and optional execution context, serializes max-plus-one attempts, persists all five exact typed results with authenticated inspector attribution, and commits Inspection/Result/Submission as one unit. PostgreSQL concurrency and rollback/retry tests pass.
+
+Phase 5D-4 adds exactly one public write route: QUALITY-only `POST /inspections`. It uses the existing authenticated session, global CSRF/origin guards, strict Phase 5D request and `Idempotency-Key` parsers, and the Phase 5D-3 transactional service. Initial writes and matching durable replays return 201 with the same UUID-free public response. Focused real HTTP tests cover all five evidence types, role/security boundaries, safe context errors, idempotency scoping, attribution, quality-history visibility, and no automatic Nonconformance creation.
+
+Phase 5D-5 completes final automated acceptance and reconciliation. Focused utility/service and real HTTP tests, PostgreSQL concurrency and lifecycle races, quality-history readback, complete backend regression, the unchanged deterministic reference vector, 9/9 integrity checks, UTC evidence, eight-migration/no-drift verification, TypeScript, type-aware lint, and production build pass. Overall Phase 5D is verified complete. Phase 5E inspection-entry experience and Phase 5F integration/history reconciliation are also verified complete.
+
+Phase 5F-3 final regression uses only the explicitly selected `battery_quality_traceability_test` database behind the exact-name guard. Phase 5-focused suites pass 114/114, authentication/security/Traceability/history suites pass 113/113, the complete backend suite passes 118/118, and sequential E2E passes 79/79. Prisma validates, all eight migrations are current with no detected schema difference, cleanup restores zero users/submissions and the deterministic eight inspections/results plus five specifications, and integrity remains 9/9. TypeScript, type-aware lint, and the NestJS production build pass. No production API, schema, migration, or database behavior changed during closure.
+
+Run its focused unit, PostgreSQL concurrency/integration, and HTTP tests with `npm run test:inspection-specifications` after loading the ignored local database environment.
 
 After exporting `DATABASE_URL`, validate the configuration and generate the client without opening a database connection:
 
@@ -101,7 +154,45 @@ npm run phase2:verify
 
 This grouped command formats and validates Prisma, regenerates the client, confirms migration status and no drift, then runs TypeScript, lint, unit, traceability, E2E, production-build, and diff checks. It requires the ignored local environment configuration to have been loaded first. Phase 2H automated regression and the user-performed manual acceptance checklist both passed; the evidence is recorded in the root `ROADMAP.md`.
 
-The small deterministic dataset is intended for correctness and understandable stories, not load testing. Large synthetic production generation, performance benchmarks, pagination/depth limits, REST exposure, and UI are deferred.
+The small deterministic dataset is intended for correctness and understandable stories, not load testing. Verified Phase 5G preserves it alongside a separate configurable deterministic large-data generator and curated reviewer guidance. The representative MEDIUM profile was measured before any optimization decision; the existing seed is never replaced by load data.
+
+### Phase 5G generator foundation
+
+Phase 5G-1 adds a database-free versioned planning contract in `scripts/synthetic-generator-contract.ts`; it does not generate or persist records. `SMALL`, `MEDIUM`, and `LARGE` plan 100, 2,000, and 10,000 packs respectively, while bounded overrides cap custom plans at 25,000 packs. Explicit lowercase seeds, safe `SYN5G_*` namespaces, SHA-256-derived identities/timestamps/scenarios, exact count planning, and a canonical ownership fingerprint make plans repeatable and namespace-isolated.
+
+Run the focused pure contract tests with:
+
+```bash
+npm run test:synthetic-generator
+```
+
+Dry-run planning has no database dependency. Mutations must receive an explicit URL and call `assertSyntheticGeneratorMutationTarget`, which accepts only `battery_quality_traceability_test` and then runs the established live identity guard with that same URL. Development and unknown databases are rejected before verification. Rerun and cleanup behavior is restricted to exact identities whose canonical content matches the versioned plan, never prefix-only deletion, truncate, reset, or reseed. See [`../../docs/SYNTHETIC_TEST_DATA.md`](../../docs/SYNTHETIC_TEST_DATA.md).
+
+Phase 5G-2A adds a guarded persistence subset for one deterministic product model and at most 100 SMALL-profile PACK units. It creates Prisma only after the exact database guard, preflights deterministic IDs and public codes, verifies canonical fields and timestamps, serializes a resolved namespace in one transaction, writes in batches of at most 100, and reuses only exact matches. Cleanup is an explicit API requiring the exact plan fingerprint and dependency-free exact ownership; it has no broad or prefix-delete mode.
+
+Run its isolated PostgreSQL verification only with the explicit test URL:
+
+```bash
+DATABASE_URL="$BMQT_TEST_DATABASE_URL" npm run test:synthetic-generator-persistence
+```
+
+The package command runs the database guard before Vitest, while the test process and every persistence/cleanup call enforce the guard again. The suite cleans only its deterministic identities and finishes with no generated rows, unchanged reference fixtures, and integrity 9/9. At the 2A checkpoint it generated no connected history; 2B adds genealogy only and still generates no process or quality history.
+
+Phase 5G-2B extends the same command and mutation path to deterministic connected genealogy. The SMALL defaults create 100 PACKs, 100 MODULEs, 400 CELLs, 100 COMPONENTs, 100 MATERIALs, and 700 PACK→MODULE or MODULE→child relations. Exact endpoints, positions, timestamps, and relationship IDs participate in ownership verification. Rerun, partial recovery, unit and relationship collision refusal, cycle/orphan checks, and edge-first exact cleanup are verified. Process, inspection, NC, rework, retest, and verification generation remain absent.
+
+Phase 5G-2C adds four generator-owned process definitions, one product route, four ordered steps, and deterministic PACK execution history. For the fixed SMALL acceptance seed, 68 packs receive four standard attempts, 22 add a VERIFY retry, and 10 add ASSEMBLE plus VERIFY retries: 442 COMPLETED executions total, including 42 retry attempts with optional route context. Exact configuration/attempt preflight, partial recovery, process collision refusal, public Process History mapping, and execution-first cleanup are verified. No inspection or NC record is generated.
+
+Phase 5G-2D adds five owned PUBLISHED specifications and deterministic Quality History through `scripts/synthetic-generator-quality.ts`. The fixed 100-pack acceptance seed creates four exact-version options and 523 atomic Inspection/InspectionResult/InspectionSubmission aggregates: 500 PASS, 23 NG, all five evidence types, preserved NG→PASS retests, 273 compatible VERIFY links, and 250 null execution contexts. It uses the production parser, fingerprint, and evaluator; exact rerun creates no duplicates, compatible missing aggregates recover, conflicts refuse before quality writes, and cleanup removes only fully verified plan-owned rows. NG never creates a Nonconformance. Run this coverage only with an explicit test URL through `npm run test:synthetic-generator-persistence`.
+
+Phase 5G-2E adds bounded lifecycle persistence through `scripts/synthetic-generator-nc.ts`. The fixed SMALL seed leaves 77 clean and 14 NG/retest packs without NC, then creates nine explicit NCs: three OPEN, three RESOLVED correction/retest, and three CLOSED escalated literal-REWORK/retest histories. Five categories, three abnormal cases, 15 actions, six verifications, and nine dispositions use only existing models and enums. Exact rerun, partial lifecycle recovery, collision refusal, public Nonconformance History mapping, dependency-refusing cleanup, and integrity 9/9 are covered by the same guarded test command. No inspection endpoint behavior or automatic NC creation changes.
+
+Phase 5G-3A enables only the exact MEDIUM defaults: 2,000 PACKs, 4,000 MODULEs, 32,000 CELLs, 8,000 COMPONENTs, and 4,000 MATERIALs plus deterministic process, quality, and NC histories. The verified plan persisted 139,671 non-aggregate rows. Writes stay in 100-row batches; exact ownership reads use bounded 500-row batches; MEDIUM transactions use an explicit bounded timeout. Generation, zero-create rerun, one-lifecycle recovery, and exact-fingerprint cleanup were executed against `battery_quality_traceability_test`. Cleanup left zero generator-owned rows and reference integrity 9/9. Custom MEDIUM, LARGE persistence, and speculative index changes remain refused; Phase 5G-3B owns measured query evidence.
+
+Phase 5G-3B measured the existing Search, Unit Detail, bounded genealogy, paginated Process/Quality/NC History, specification discovery/detail, idempotency lookup, and dashboard paths against one retained MEDIUM session. One warm-up plus five service repetitions and read-only `EXPLAIN (ANALYZE, BUFFERS)` plans are recorded in `docs/SYNTHETIC_TEST_DATA.md`. Indexed per-unit paths remained bounded; dashboard inventory and recent activity were the only observed scale-wide scans. No performance target or optimization was inferred. Exact cleanup removed all 139,671 rows, left zero generator records, and retained reference integrity 9/9.
+
+Phase 5G-5 closes generator verification without new behavior. The explicit test-database guard passes before each database suite; generator contracts pass 26/26, guarded persistence passes 15/15, complete backend unit regression passes 144/144, Traceability/history passes 19/19, focused inspection HTTP passes 5/5, and sequential HTTP E2E passes 79/79. Final read-only counts show zero generator product/unit/specification/submission/NC anchors and reference integrity 9/9. LARGE persistence remains disabled, custom MEDIUM remains refused, and cleanup remains exact-fingerprint/dependency verified rather than prefix based. Overall Phase 5G is verified complete.
+
+Phase 5H final closure reruns the complete 144-test backend unit suite, guarded 15-test persistence/cleanup suite, and sequential 79-test HTTP E2E suite, with focused post-format specification and quality suites passing 61/61 and 27/27. The exact test-database guard, eight current migrations, empty schema drift, zero generator anchors, integrity 9/9, static/build gates, security review, and final documentation/change inventory pass. Overall Phase 5 is verified complete; Phase 6 is planned and not started.
 
 ## Health endpoint
 

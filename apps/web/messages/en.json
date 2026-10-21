@@ -178,6 +178,24 @@
       "search": "Search",
       "clear": "Clear"
     },
+    "samples": {
+      "summary": "Try a fictional sample",
+      "description": "These curated portfolio records demonstrate distinct traceability and quality histories.",
+      "behavior": "Selecting a sample fills only the trace-code input. Review the existing filters, then choose Search.",
+      "use": "Use sample {traceCode}: {scenario}",
+      "cleanPass": {
+        "title": "Clean PASS",
+        "description": "Connected genealogy, completed process evidence, and PASS inspections."
+      },
+      "ngRetest": {
+        "title": "NG followed by PASS retest",
+        "description": "The original NG remains beside its correction, retest, verification, and later PASS evidence."
+      },
+      "escalated": {
+        "title": "Escalated NC and rework",
+        "description": "An abnormal case, escalation, component replacement, retest, verification, and dispositions."
+      }
+    },
     "results": {
       "eyebrow": "Persisted evidence",
       "title": "Traceable units",
@@ -375,6 +393,57 @@
       "retry": "Try again"
     },
     "unitTypes": { "PACK": "PACK", "MODULE": "MODULE", "CELL": "CELL", "COMPONENT": "COMPONENT", "MATERIAL": "MATERIAL" }
+  },
+  "InspectionEntry": {
+    "foundation": {
+      "title": "Inspection entry foundation is ready",
+      "description": "Secure API contracts, recovery state, and localization are prepared. Unit and specification selection will be introduced in the next subphase.",
+      "steps": { "unit": "Unit", "specification": "Specification", "evidence": "Evidence", "review": "Review", "result": "Result" }
+    },
+    "unit": {
+      "title": "Confirm a traceable unit", "description": "Enter an exact public trace code before choosing an inspection specification.", "traceCode": "Trace code", "confirm": "Confirm unit", "loading": "Looking up the traceable unit…", "help": "Use 1–128 letters, numbers, hyphens, or underscores. Input is normalized to uppercase.", "invalid": "Enter a valid trace code.", "confirmed": "Unit confirmed", "unitType": "Unit type", "productModel": "Product model", "notAssigned": "Not directly assigned", "historySummary": "Existing history", "historyCounts": "{process} process · {quality} quality",
+      "errors": {
+        "notFound": { "title": "Unit not found", "description": "No traceable unit matches this exact code. The entered code has been preserved." },
+        "forbidden": { "title": "Unit access unavailable", "description": "Your authenticated role cannot read this unit." },
+        "network": { "title": "Unable to reach traceability", "description": "Check the connection and try this unit again." },
+        "server": { "title": "Unit lookup unavailable", "description": "The traceability service could not complete the lookup." },
+        "unexpected": { "title": "Unexpected unit response", "description": "The response could not be displayed safely." }
+      }
+    },
+    "discovery": {
+      "title": "Matching published specifications", "compatibility": "These published specifications match the unit type. Final unit, process, route, and execution compatibility remains server-authoritative at submission.", "search": "Code or name", "resultType": "Result type", "allResultTypes": "All result types", "processCode": "Process code", "selectionLegend": "Choose one exact specification version", "loading": "Loading matching published specifications…", "empty": "No matching published specifications", "emptyDescription": "Adjust the optional filters or confirm another unit.", "page": "Page {page} of {totalPages}", "paginationLabel": "Specification discovery pages",
+      "errors": {
+        "notFound": { "title": "Specifications unavailable", "description": "No published specification was found for this request." },
+        "forbidden": { "title": "Discovery access unavailable", "description": "Your role cannot discover inspection specifications." },
+        "network": { "title": "Unable to reach specification discovery", "description": "Check the connection and try again." },
+        "server": { "title": "Specification discovery unavailable", "description": "The service could not complete discovery." },
+        "unexpected": { "title": "Unexpected discovery response", "description": "The response could not be displayed safely." }
+      }
+    },
+    "criteria": {
+      "title": "Exact-version inspection criteria", "serverAuthority": "Displayed criteria guide evidence entry; the backend remains authoritative for the final PASS/NG outcome.", "loading": "Loading exact-version criteria…", "unavailable": "Exact specification version unavailable", "identity": "Specification", "name": "Canonical name", "resultType": "Result type", "targetUnitType": "Target unit type", "process": "Process", "routeStep": "Route step", "step": "Step {order}", "notConfigured": "Not configured", "lowerBound": "Lower bound", "upperBound": "Upper bound", "measurementUnit": "Measurement unit", "acceptable": "Configured acceptable", "notAcceptable": "Configured not acceptable",
+      "numeric": { "title": "Numeric acceptance criteria", "inclusive": "Configured lower and upper bounds are inclusive." },
+      "boolean": { "title": "Boolean acceptance criteria", "expected": "Expected observation: {value}" },
+      "categorical": { "title": "Categorical options" },
+      "visual": { "title": "Visual options", "textOnly": "Choose from these configured textual options later; no image upload is required." },
+      "text": { "title": "Text evidence", "requirement": "Text evidence requires a nonblank observation and an explicit inspector PASS/NG outcome." },
+      "errors": { "notFound": "This exact published version is no longer available.", "forbidden": "Your role cannot read this specification.", "network": "The service could not be reached.", "server": "The service could not load these criteria.", "unexpected": "The response could not be displayed safely." }
+    },
+    "execution": {
+      "title": "Optional process execution", "description": "Link an existing execution for this unit only when its public process and route context match the selected specification.", "none": "No execution selected", "loading": "Loading matching process history…", "empty": "No matching executions are present on the loaded history pages.", "loadMore": "Load more process history", "processAttempt": "Process attempt {attempt}", "selectionLegend": "Choose an optional process execution", "errorTitle": "Process history unavailable",
+      "errors": { "notFound": "No process history was found for this unit.", "forbidden": "Your role cannot read process history.", "network": "The service could not be reached.", "server": "The service could not load process history.", "unexpected": "The response could not be displayed safely." }
+    },
+    "evidence": { "title": "Inspection evidence", "description": "Enter evidence for the selected exact specification. This page does not calculate an authoritative outcome.", "numeric": "Measured value", "boolean": "Observed value", "true": "True", "false": "False", "categorical": "Configured category", "visual": "Configured visual option", "text": "Text evidence", "outcome": "Inspector-provided TEXT outcome", "pass": "PASS", "ng": "NG", "characterCount": "{count} of {maximum} Unicode characters" },
+    "timestamp": { "label": "Inspection occurrence time", "help": "Enter local wall-clock time in {zone} as DD/MM/YYYY, HH:mm. Review shows the explicit UTC serialization; the server enforces the future-time limit.", "invalid": "Enter a complete valid date and time as DD/MM/YYYY, HH:mm.", "utc": "Occurrence time (UTC)", "pickerOpen": "Choose date and time", "pickerClose": "Close date and time chooser", "pickerLegend": "Choose inspection occurrence date and time", "pickerDay": "Day", "pickerMonth": "Month", "pickerYear": "Year", "pickerHour": "Hour", "pickerMinute": "Minute", "pickerTime": "Time" },
+    "review": { "title": "Review inspection draft", "description": "Confirm this unsent draft. Frontend validation does not guarantee backend compatibility or acceptance.", "prepare": "Review inspection draft", "notSubmitted": "Review only · not submitted", "evidence": "Evidence", "noPrediction": "No PASS/NG prediction is made for this evidence. The backend will remain authoritative.", "textOutcomeInput": "Inspector-provided TEXT outcome: {outcome}. This is input evidence, not a server-confirmed result.", "noSubmit": "Submission and authoritative result behavior remain unavailable in this subphase.", "confirmation": "Submitting confirms this reviewed public envelope. The backend will validate compatibility and determine the authoritative result." },
+    "validation": { "summary": "Review the highlighted evidence and occurrence time before continuing.", "REQUIRED": "Evidence is required.", "INVALID_DECIMAL": "Use a plain decimal string without exponent notation or surrounding whitespace.", "DECIMAL_OUT_OF_RANGE": "The value must fit DECIMAL(18,6), including at most 12 significant integer digits and 6 fractional digits.", "INVALID_OPTION": "Choose an option owned by this exact specification version.", "TEXT_TOO_LONG": "Text evidence must contain no more than 4,000 Unicode characters.", "OUTCOME_REQUIRED": "Choose PASS or NG for TEXT evidence.", "TYPE_MISMATCH": "The evidence type no longer matches the selected specification." },
+    "submission": { "pending": "Submitting inspection…", "uncertain": "The submission outcome is uncertain. Recover or explicitly abandon it before starting another logical submission.", "retrySame": "Retry the same submission", "failedTitle": "Inspection was not submitted", "deterministicFailure": "The server returned a definite failure. Your evidence remains available so you can return to review it." },
+    "result": { "title": "Authoritative result", "attempt": "Inspection attempt {attempt}", "attemptLabel": "Inspection attempt", "createdAt": "Recorded at", "outcome": "Confirmed outcome", "confirmed": "Server-confirmed inspection", "textDistinction": "Inspector-entered TEXT outcome: {input}. Server-confirmed result: {confirmed}.", "history": "View quality history", "another": "Inspect again" },
+    "errors": { "INVALID_REQUEST": "Review the inspection request and try again.", "INVALID_TYPED_RESULT": "The evidence does not match the selected specification.", "UNAUTHENTICATED": "Your session has ended. Sign in again.", "FORBIDDEN": "Your role cannot submit inspections.", "TRACE_UNIT_NOT_FOUND": "The traceable unit was not found.", "INSPECTION_SPECIFICATION_NOT_FOUND": "The exact specification version was not found.", "INSPECTION_SPECIFICATION_NOT_PUBLISHED": "The exact specification version is no longer published.", "INCOMPATIBLE_INSPECTION_CONTEXT": "The unit, specification, or execution context is incompatible.", "IDEMPOTENCY_CONFLICT": "This recovery key belongs to a different logical submission.", "INSPECTION_WRITE_CONFLICT": "The inspection could not be written safely. Retry the same submission.", "INSPECTION_PERSISTENCE_ERROR": "The inspection service could not persist the submission.", "network": "The service could not be reached. The outcome may be uncertain.", "malformed": "The service confirmed success with a response that could not be displayed safely. The outcome remains uncertain; retry with the same recovery key.", "recovery": "Safe recovery storage is unavailable. The inspection was not sent.", "unexpected": "The inspection request could not be completed safely." },
+    "actions": { "continue": "Continue", "back": "Back", "search": "Search", "previous": "Previous", "next": "Next", "submit": "Submit inspection", "retry": "Try again", "recover": "Recover submission", "abandon": "Abandon pending submission", "returnToReview": "Return to review", "cancel": "Cancel" },
+    "recovery": { "title": "Unresolved inspection submission", "description": "A previous submission may have reached the server. Retry it with the same recovery key or explicitly abandon it.", "expired": "The saved recovery record is no longer available.", "abandonWarning": "Abandoning removes local recovery for this unresolved request. It does not prove that the server did not record the inspection." },
+    "upcoming": { "title": "Inspection entry workflow", "description": "Review, submit, recover uncertain outcomes, and use the server-confirmed result." },
+    "accessibility": { "workspaceLabel": "Inspection entry", "workflowLabel": "Inspection entry stages", "loading": "Inspection data is loading", "errorSummary": "Inspection form errors", "resultAnnouncement": "Inspection result: {outcome}", "draftRestored": "Your unsent inspection draft was restored after the language change." }
   },
   "Auth": {
     "brand": {

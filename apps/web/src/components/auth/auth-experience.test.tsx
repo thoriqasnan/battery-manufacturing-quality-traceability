@@ -6,6 +6,8 @@ import englishMessages from "../../../messages/en.json";
 import indonesianMessages from "../../../messages/id.json";
 import { AuthGateway } from "./auth-gateway";
 import { AuthProvider } from "./auth-provider";
+import { INSPECTION_RECOVERY_STORAGE_KEY } from "@/lib/inspection-entry-state";
+import { INSPECTION_WORKSPACE_DRAFT_KEY } from "@/lib/inspection-workspace-draft";
 
 vi.mock("@/components/language-switcher", () => ({
   LanguageSwitcher: () => <label>Language<select aria-label="Language"><option>English</option></select></label>,
@@ -182,6 +184,8 @@ describe("frontend authentication experience", () => {
 
   it("logs out with the in-memory CSRF token and clears authenticated UI", async () => {
     const sessionStorageSpy = vi.spyOn(window.sessionStorage, "setItem");
+    window.sessionStorage.setItem(INSPECTION_RECOVERY_STORAGE_KEY, "test-recovery");
+    window.sessionStorage.setItem(INSPECTION_WORKSPACE_DRAFT_KEY, "test-draft");
     fetchMock
       .mockResolvedValueOnce(response(200, sessionBody))
       .mockResolvedValueOnce(response(204));
@@ -196,7 +200,9 @@ describe("frontend authentication experience", () => {
     expect(new Headers(logoutCall[1].headers).get("X-CSRF-Token")).toBe(
       "in-memory-csrf-token",
     );
-    expect(sessionStorageSpy).not.toHaveBeenCalled();
+    expect(sessionStorageSpy).toHaveBeenCalledTimes(2);
+    expect(window.sessionStorage.getItem(INSPECTION_RECOVERY_STORAGE_KEY)).toBeNull();
+    expect(window.sessionStorage.getItem(INSPECTION_WORKSPACE_DRAFT_KEY)).toBeNull();
   });
 
   it("handles an already-invalid session during logout as unauthenticated", async () => {

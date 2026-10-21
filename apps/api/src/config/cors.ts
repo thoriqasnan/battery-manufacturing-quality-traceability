@@ -1,5 +1,22 @@
 const developmentFrontendOrigin = 'http://localhost:3000';
 
+export function resolveApiCorsOptions(
+  configuredOrigin: string | undefined,
+  environment: string | undefined,
+) {
+  return {
+    origin: resolveFrontendOrigin(configuredOrigin, environment),
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: [
+      'Accept',
+      'Content-Type',
+      'X-CSRF-Token',
+      'Idempotency-Key',
+    ],
+    credentials: true,
+  };
+}
+
 export function resolveFrontendOrigin(
   configuredOrigin: string | undefined,
   environment: string | undefined,

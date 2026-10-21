@@ -17,6 +17,8 @@ import {
   login as requestLogin,
   logout as requestLogout,
 } from "@/lib/api/auth";
+import { clearInspectionRecovery } from "@/lib/inspection-entry-state";
+import { clearInspectionWorkspaceDraft } from "@/lib/inspection-workspace-draft";
 
 export type AuthState =
   | { status: "bootstrapping" }
@@ -95,10 +97,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsSubmitting(true);
     try {
       await requestLogout(state.session.csrfToken);
+      clearInspectionRecovery();
+      clearInspectionWorkspaceDraft();
       setState({ status: "unauthenticated" });
     } catch (error) {
       const kind = errorKind(error);
       if (kind === "unauthenticated") {
+        clearInspectionRecovery();
+        clearInspectionWorkspaceDraft();
         setState({ status: "unauthenticated" });
       } else {
         setState({ status: "authenticated", session: state.session, error: kind });
@@ -109,6 +115,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [state]);
 
   const invalidateSession = useCallback(() => {
+    clearInspectionRecovery();
+    clearInspectionWorkspaceDraft();
     setState({ status: "unauthenticated" });
   }, []);
 

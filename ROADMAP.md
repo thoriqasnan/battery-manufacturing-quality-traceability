@@ -531,12 +531,470 @@ Phase 4 is read-oriented and its hero capability is unified unit traceability, n
 
 ## Phase 5 — Quality Inspection System
 
-**Status: NEXT / NOT STARTED**
+**Status: VERIFIED COMPLETE**
 
 - Inspection specifications
 - Inspection entry
 - Typed measurements
 - PASS/NG history
+
+### Phase 5A — Discovery & Scope
+
+**Status: COMPLETE / REVIEWED**
+
+- Inspected the verified Phase 4 architecture and repository-defined Phase 5 scope without modifying implementation or data.
+- Classified the approved synthetic-data, reviewer-experience, date-range, and performance directions and proposed the user-approved Phase 5 decomposition below.
+
+### Phase 5B — Quality Contracts & Persistence Boundary
+
+**Status: VERIFIED COMPLETE**
+
+#### Phase 5B-1 — Quality Architecture & Contract Design
+
+**Status: VERIFIED COMPLETE**
+
+- Defined the authoritative specification lifecycle, versioning, typed PASS/NG authority, inspection occurrence/persistence times, actor attribution, atomic write, attempt concurrency, idempotency, contextual validation, public errors, and performance sequencing in `docs/QUALITY_INSPECTION.md`.
+- Confirmed the separation of duties: `ENGINEERING` will receive the new explicit `inspection-specification:manage` permission; `QUALITY` retains `inspection:write`; `ADMIN` receives no implicit bypass.
+- No schema, migration, backend/frontend implementation, seed, dependency, generated artifact, or database state changed in this documentation-only subphase.
+
+#### Phase 5B-2 — Persistence / Schema Implementation
+
+**Status: VERIFIED COMPLETE**
+
+- Added `DRAFT`, `PUBLISHED`, and `RETIRED` specification lifecycle persistence, backfilled the five reference versions to `PUBLISHED`, made `DRAFT` the future default, and removed specification `isActive` plus its indexes so lifecycle has one source of truth.
+- Added nullable legacy-compatible `Inspection.inspectorUserId -> User.id` with restrictive deletion and no fake attribution; added contract-bounded `InspectionSubmission` persistence with scoped idempotency uniqueness, fixed SHA-256 fingerprint shape, one-to-one inspection linkage, successful response metadata, timestamps, and restrictive user/inspection foreign keys.
+- Added `inspection-specification:manage` to the centralized permission vocabulary and only the `ENGINEERING` bundle. `QUALITY` retains `inspection:write`; `ADMIN` retains no domain bypass.
+- Migration `20261006000000_phase_5b2_quality_persistence` applied without reset. Prisma reports eight migrations current and no schema drift. Two seed runs remained deterministic, all five specifications are published, all eight legacy inspections remain unattributed, all nine integrity checks pass, and the UTC fixture still maps `2026-01-11T08:00:00Z` to epoch `1768118400`.
+- Verification passed 6 focused persistence tests, 10 authorization tests, 23 authentication tests, 7 user-persistence tests, 19 traceability tests, 15 detail/history tests, 5 dashboard tests, 62 E2E tests, 67 unit tests, TypeScript, type-aware lint, production build, and diff hygiene. This persistence-only subphase has no meaningful browser/manual gate.
+
+#### Phase 5B-3 — Contract / Persistence Verification & Reconciliation
+
+**Status: VERIFIED COMPLETE**
+
+- Reviewed the complete accumulated Phase 5B-1/5B-2 diff against `docs/QUALITY_INSPECTION.md`, the applied migration, live PostgreSQL catalog, deterministic seed, permission matrix, public route inventory, focused persistence tests, and existing traceability/UTC architecture. No production defect required a source, schema, migration, seed, or test correction.
+- Catalog evidence confirmed exactly `DRAFT`, `PUBLISHED`, and `RETIRED`; a `DRAFT` future default; no specification `isActive`; five published reference versions; nullable inspector attribution; restrictive inspector/submission foreign keys; six idempotency checks; scoped and one-inspection uniqueness; and retained specification-version and attempt-stream uniqueness.
+- Two additional seed runs completed without duplicates and retained the documented count vector: 2 products, 4 processes, 2 routes/8 steps, 16 units, 13 genealogy relations, 14 executions, 5 specifications/4 options, 8 inspections/results, 2 NCs, 1 abnormal case, 5 actions, 2 verifications, and 3 dispositions. All legacy inspections remain unattributed.
+- Final verification passed 6 focused persistence tests, 10 authorization tests, 23 authentication tests, 7 user-persistence tests, 19 traceability tests, 15 detail/history tests, 5 dashboard tests, 62 sequential E2E tests, 67 unit tests, Prisma format/validate/generate, migration status/no drift, TypeScript, type-aware lint, production build, all 9 integrity checks, UTC Prisma-session coverage, and epoch `1768118400` for `2026-01-11T08:00:00Z`.
+- Public-data, secret, route-inventory, and scope review found no confidential content or credential. Phase 5B remains verified complete and its persistence boundary passes the completed Phase 5C regression.
+
+### Phase 5C — Inspection Specification Services
+
+**Status: VERIFIED COMPLETE**
+
+#### Phase 5C-1 — Inspection Specification Service & API Contract Design
+
+**Status: APPROVED / COMPLETE**
+
+- Approved separate authorization surfaces: ENGINEERING management uses `inspection-specification:manage`; QUALITY published-only discovery uses `inspection:write`; no OR-permission guard, new permission, or implicit ADMIN bypass is introduced.
+- Approved stable public `(code, version)` identity and code normalization (`trim -> uppercase -> [A-Z0-9_-]+`, 1–64 characters) without public UUIDs or a case-insensitive schema migration.
+- Approved bounded management list/exact detail, bounded PUBLISHED-only discovery, version-1 DRAFT creation, full DRAFT `PUT` replacement, atomic categorical/visual option-set replacement, publication, retirement, and immutable-version copying into a new DRAFT.
+- Approved exact-version mutation locking plus strong ETag/`If-Match` for replacement/publication/retirement, and a distinct transaction-scoped family advisory lock for concurrent next-version allocation. These locks are separate from future Phase 5D inspection locks.
+- Approved no public DELETE, option ordering by code ascending, decimal-string API values, publication completeness checks, irreversible lifecycle transitions, and no inspection entry, frontend, NC automation, Phase 6 workflow, date ranges, or large generator in Phase 5C.
+- Reconciled transport errors with the implemented global contract: `401 UNAUTHENTICATED` and `403 FORBIDDEN`; the earlier planned authentication/permission names are superseded without a cross-cutting guard migration.
+
+#### Phase 5C-1R — Contract Documentation Reconciliation
+
+**Status: COMPLETE**
+
+- Recorded the approved service/API, authorization, lifecycle, validation, option, concurrency, normalization, error, and delivery contracts in `docs/QUALITY_INSPECTION.md` and this roadmap without adding production code, schema, migration, endpoint, test, UI, or database mutation.
+
+#### Phase 5C-2 — Read & Discovery Services
+
+**Status: VERIFIED COMPLETE**
+
+- Implemented bounded ENGINEERING management listing/exact-version detail and separate bounded QUALITY PUBLISHED-only discovery with public `(code, version)` identity, shared normalization, typed configuration, decimal strings, public process/route-step identity, deterministic option/code/version ordering, safe errors, and no UUID exposure.
+- Management list supports only the approved query/lifecycle/result-type/target-unit/process filters; discovery forcibly constrains lifecycle to `PUBLISHED`, returns every published version, omits lifecycle, and makes hidden DRAFT/RETIRED exact versions indistinguishable from unknown identities.
+- Management detail emits a deterministic strong canonical ETag without adding `If-Match` mutation behavior. Bounded Prisma relation selects avoid N+1 reads and never load inspection history.
+- Verification passed 40 focused unit/PostgreSQL/HTTP tests, 10 authorization, 23 authentication, 7 user-persistence, 12 quality-persistence, 19 traceability, 24 search, 15 detail/genealogy, 5 dashboard, 94 full unit tests, 69 sequential E2E tests, Prisma validation, TypeScript, type-aware lint, and production build. One traceability run transiently exceeded its existing five-second timeout; its isolated rerun passed 19/19.
+- No separate manual acceptance is required because the complete read-only HTTP, RBAC, pagination, ETag, typed-shape, hidden-lifecycle, database, and privacy contracts are deterministically covered.
+
+#### Phase 5C-3 — DRAFT Management & Lifecycle
+
+**Status: VERIFIED COMPLETE**
+
+- Implemented version-1 DRAFT creation, complete DRAFT `PUT`/option-set replacement, publication, retirement, exact-version ETag concurrency, lifecycle immutability, safe transactions/errors, ENGINEERING-only RBAC, and unchanged global CSRF/origin enforcement.
+- Public process and optional composite route-step identities resolve server-side; strict discriminated validation covers all five result types, normalized codes/options, exact decimals, publication completeness, and safe public errors without UUID or persistence leakage.
+- Transaction-scoped SHA-256-to-signed-bigint advisory locks serialize exact-version mutation. Initial same-code creation uses the future-compatible family namespace only to make version-1 creation deterministic; no new-version endpoint or allocation behavior exists.
+- Verification passed 53 focused unit/PostgreSQL/HTTP tests, including real concurrent create and edit races; broader regression passed 15 quality-persistence, 23 authentication, 10 authorization, 7 user-persistence, 19 traceability, 24 search, 15 detail/genealogy, 5 dashboard, 102 full unit, and 71 sequential E2E tests, plus Prisma validation, TypeScript, type-aware lint, and production build.
+- Automated PostgreSQL concurrency and HTTP security/lifecycle evidence fully cover acceptance; no separate manual gate is required.
+
+#### Phase 5C-4 — New-Version Creation & Family Concurrency
+
+**Status: VERIFIED COMPLETE**
+
+- Implemented ENGINEERING-only `POST /inspection-specifications/:code/versions` with strict exact-source selection, PUBLISHED/RETIRED copying, DRAFT-source rejection, and server-controlled `max + 1` DRAFT allocation without filling gaps.
+- Reused the family-scoped SHA-256-to-signed-bigint advisory lock shared with version-1 creation. Concurrent equivalent-case paths serialize and create distinct sequential versions; database uniqueness remains defense-in-depth.
+- Scalar configuration is copied faithfully; categorical/visual options receive fresh exclusive ownership. Source lifecycle/configuration/options and existing inspection relationships remain unchanged, and the response includes a fresh strong ETag.
+- Verification passed 60 focused tests, 19 quality-persistence, 23 authentication, 10 authorization, 7 user-persistence, 19 traceability, 24 search, 15 detail/genealogy, 5 dashboard, 104 full unit, and 72 sequential E2E tests, plus Prisma validation, TypeScript, type-aware lint, and production build.
+- Automated PostgreSQL concurrency and HTTP security/history evidence fully cover acceptance; no separate manual gate is required.
+
+#### Phase 5C-5 — Integration, API Acceptance & Reconciliation
+
+**Status: VERIFIED COMPLETE**
+
+- Completed the real-HTTP ENGINEERING workflow across create, read, ETag replacement, stale rejection, publication, immutable-source version copying, next-version modification/publication, older-version retirement, and independent exact-version reads.
+- Completed QUALITY published-only discovery acceptance plus ENGINEERING/QUALITY/ADMIN/PRODUCTION separation, unauthenticated behavior, CSRF/origin enforcement, strong ETag rejection cases, lifecycle immutability, privacy, safe-error, route-inventory, and scope review.
+- Reconfirmed real PostgreSQL concurrency for equivalent normalized creation, exact-version edits, edit/publish races, family allocation, and equivalent-case family paths. Reference counts remain `2/4/2/8/16/13/14/5/4/8/8/2/1/5/2/3`; integrity is valid at 9/9 and UTC epoch evidence remains `1768118400`.
+- Final verification passed 61 focused Phase 5C tests, 19 Phase 5B persistence tests, 23 authentication, 10 authorization, 7 user-persistence, 19 traceability/UTC, 24 search, 15 detail/genealogy, 5 dashboard, 104 full unit, and 73 sequential E2E tests. Prisma format/validate/generate, eight-migration status, no drift, TypeScript, type-aware lint, production build, and diff checks passed.
+- Phase 5C has no frontend; the automated cross-role HTTP and PostgreSQL acceptance evidence satisfies the gate without a browser or manual smoke.
+
+### Phase 5D — Atomic Inspection Entry API
+
+**Status: VERIFIED COMPLETE**
+
+#### Phase 5D-1 — Atomic Inspection Entry API Contract Review
+
+**Status: APPROVED / COMPLETE**
+
+- Approved one future `POST /inspections` contract with normalized public unit/specification identities, optional public execution context, strict discriminated evidence, durable `Idempotency-Key`, server-authoritative outcomes, and atomic Inspection/Result/Submission persistence.
+- Approved lock order is idempotency, exact-specification lifecycle/mutation, then inspection-attempt.
+
+#### Phase 5D-2 — Inspection Request, Evaluation, Fingerprint & Lock Utilities
+
+**Status: VERIFIED COMPLETE**
+
+- Implemented pure strict request and Idempotency-Key parsing, shared public-code normalization, exact `DECIMAL(18,6)` canonicalization/comparison, Unicode-safe TEXT validation, timezone-qualified instant normalization, and deterministic five-type PASS/NG evaluation.
+- Implemented versioned canonical SHA-256 request fingerprints plus deterministic attempt/idempotency advisory-lock inputs and signed-bigint keys. The approved global lock order is represented explicitly; no database lock is acquired.
+- Verification passed 12 focused utility tests, 61 Phase 5C tests, 19 quality-persistence, 23 authentication, 10 authorization, and 116 backend unit tests, plus TypeScript, type-aware lint, and production build.
+- Added no controller, production persistence, transaction orchestration, schema/migration, frontend, NC behavior, generator, date range, analytics, or Phase 6 work.
+
+#### Phase 5D-3 — Atomic Inspection Persistence & Concurrency
+
+**Status: VERIFIED COMPLETE**
+
+- Implemented one transactional inspection-entry service consuming the authenticated actor, validated key, and parsed request. It acquires idempotency, exact-specification, and attempt locks in the approved order, validates PostgreSQL transaction time and context, and persists Inspection, exactly one typed Result, and Submission atomically.
+- Durable matching replay reconstructs the original public-safe logical response without another attempt; differing same-key fingerprints return a safe conflict. Server outcome evaluation, inspector attribution, optional execution context, max-plus-one attempts, and PUBLISHED lifecycle coordination reuse verified Phase 5 utilities.
+- Real PostgreSQL tests cover all five result types, PASS/NG, exact decimals, attribution, execution/context/lifecycle failures, transaction-time limits, replay/conflict, identical and different-key concurrency, gap allocation, retirement races, rollback/retry, exactly-one-result behavior, and absence of automatic NC creation.
+- Verification passed 20 focused tests, 27 quality-persistence tests, 61 Phase 5C tests, 23 authentication, 10 authorization, 7 user-persistence, 19 traceability/UTC, 24 search, 15 detail/genealogy, 5 dashboard, 116 backend unit, and 73 existing E2E tests, plus Prisma validation, TypeScript, type-aware lint, and production build.
+- Added no HTTP endpoint, schema/migration, frontend, generator, date range, analytics, Phase 5E, or Phase 6 behavior.
+
+#### Phase 5D-4 — Inspection HTTP Endpoint & Security Integration
+
+**Status: VERIFIED COMPLETE**
+
+- Added the single `POST /inspections` adapter with `inspection:write`, server-session actor attribution, the verified request and `Idempotency-Key` parsers, existing global CSRF/origin enforcement, direct delegation to the Phase 5D-3 service, and safe public error translation.
+- Real Nest HTTP/PostgreSQL acceptance covers the exact role matrix, CSRF/origin failures, all five strict evidence forms, PASS/NG authority, timestamp validation, replay/conflict and user-scoped keys, lifecycle/context failures, inspector attribution, quality-history visibility, UUID-free responses, and no automatic NC creation.
+- Added no alternate mutation route, controller persistence logic, schema/migration, frontend, generator, date range, analytics, Phase 5E, or Phase 6 behavior.
+
+#### Phase 5D-5 — Inspection Entry Integration, Acceptance & Reconciliation
+
+**Status: VERIFIED COMPLETE**
+
+- Reconciled the complete Phase 5D route, permission, lifecycle, concurrency, idempotency, history, privacy, and safe-error evidence without adding production behavior.
+- Final verification passed 20 focused utility/service tests, 5 focused real-HTTP acceptance tests, 61 Phase 5C tests, 27 quality-persistence tests, 23 authentication, 10 authorization, 7 user-persistence, 19 traceability/UTC, 24 search, 15 detail/genealogy, 8 quality-history HTTP, 5 dashboard, 116 backend unit, and 78 sequential E2E tests.
+- Prisma format/validate/generate, eight-migration status, no drift, TypeScript, type-aware lint, production build, the complete deterministic reference vector, UTC epoch `1768118400`, all nine integrity checks, and diff checking pass.
+- Automated real HTTP plus PostgreSQL concurrency/readback evidence satisfies acceptance; no browser or manual smoke is required.
+
+### Phase 5E — Inspection Entry Experience
+
+**Status: VERIFIED COMPLETE**
+
+#### Phase 5E-1 — Inspection Entry Experience Discovery & Contract Review
+
+**Status: APPROVED / COMPLETE**
+
+- Approved one progressive responsive QUALITY workspace: Unit, Specification, Evidence, Review, Result. Exact specification-version choice remains explicit, discovery results are matching published specifications rather than guaranteed unit-instance eligibility, optional execution selection reuses public process history, and VISUAL uses configured options rather than upload.
+- Confirmed the existing App Router, permission-driven shell, in-memory CSRF/session architecture, `next-intl` fallback, traceability/history clients, and backend Phase 5C/5D contracts are the implementation boundaries.
+
+#### Phase 5E-2 — Frontend Contract Foundation
+
+**Status: VERIFIED COMPLETE**
+
+- Added strict typed/runtime-validated clients for published specification discovery/detail and `POST /inspections`, preserving public identifiers, pagination, exact-version multiplicity, decimal strings, caller-owned `Idempotency-Key`, credentials, CSRF, safe public errors, and 401 session invalidation.
+- Added a six-state submission foundation with a frozen logical request, same-key retry, semantic-change key rotation, pending duplicate/edit prevention, bounded versioned `sessionStorage` recovery for uncertain outcomes, one-way authenticated-account isolation, logout cleanup, and a separate transient locale draft handoff.
+- Added complete English/Indonesian `InspectionEntry` messages with registered-locale English fallback, retained Arabic RTL, and integrated only a permission-gated minimal Inspections workspace foundation into the existing shell.
+- Verification passed 16 focused contract/state/localization tests and the complete 166-test frontend suite, plus Next route type generation, TypeScript no-emit, ESLint, production build, and diff checking. No submission UI or Phase 5E-3 behavior was introduced.
+
+#### Phase 5E-3 — Traceable Unit & Exact Specification Selection
+
+**Status: VERIFIED COMPLETE**
+
+- Replaced the foundation placeholder with one progressive QUALITY workspace for exact trace-code confirmation, public unit identity/history counts, unit-type-filtered published specification discovery, optional code/name/result/process filters, server pagination, explicit `(code, version)` selection, exact-version criteria, and optional process-history execution selection.
+- Preserves coexisting published versions without automatic latest selection. Discovery is explicitly described as matching unit type rather than guaranteed instance eligibility; final context validation remains server-authoritative.
+- Displays all five exact configuration types, inclusive numeric bounds, Boolean expectation, categorical/visual option acceptability, TEXT requirements, public process/route context, and filtered public execution attempts without calculating PASS/NG or exposing an inspection submission action.
+- Request generations and abort signals prevent stale unit, discovery, detail, or execution responses from restoring superseded context. Changing unit clears specification, detail, execution, and future evidence boundaries without touching uncertain-submission recovery.
+- Automated verification passes 41 focused inspection/client/shell/localization tests and the complete 178-test frontend suite, plus route type generation, TypeScript no-emit, ESLint, production build, and diff checking. Required real-browser desktop/mobile/keyboard/locale acceptance remains pending.
+- Phase 5E-4 resolves the earlier locale-remount limitation with a one-use, memory-only, account-bound public draft handoff that revalidates the unit, exact specification, option ownership, and execution before restoring selection or evidence.
+
+#### Phase 5E-4 — Five-Type Evidence Entry & Review
+
+**Status: VERIFIED COMPLETE**
+
+- Added specification-owned evidence drafts for all five result types. NUMERIC preserves exact decimal strings and validates the backend-compatible `DECIMAL(18,6)` boundary; BOOLEAN has an explicit unselected state; CATEGORICAL and VISUAL accept only exact-version configured option codes; TEXT requires trimmed nonblank evidence, at most 4,000 Unicode code points, and an explicit inspector PASS/NG input.
+- Added an occurrence-time editor that validates local calendar input and serializes it to an explicit UTC ISO instant without imposing the server's authoritative transaction-time future limit. Added a non-submitting review that presents public unit/specification/execution context and entered evidence without predicting authoritative non-TEXT outcomes.
+- Unit/specification changes clear dependent evidence and review; execution changes preserve evidence but invalidate review; evidence or time changes invalidate review. Uncertain-submission recovery remains independent and untouched.
+- Locale changes use a transient one-use handoff bound to a one-way authenticated-account digest. Restoration re-fetches and runtime-validates public state before accepting compatible evidence and never stores credentials, CSRF material, UUIDs, or recovery data.
+- Focused and full frontend automated verification, route generation, TypeScript, ESLint, production build, and diff checking passed. Real-browser five-type, timestamp/review, invalidation, locale, responsive, RTL, and keyboard/focus acceptance remains pending together with the 5E-3 browser gate.
+
+#### Phase 5E-5 — Submission, Result & History Integration
+
+**Status: VERIFIED COMPLETE**
+
+- Connected only a valid reviewed draft to the existing runtime-validated `POST /inspections` client. The authenticated shell supplies the in-memory CSRF token; the client retains credentialed cookies and safe 401 invalidation. The UI never calculates an outcome.
+- Finalization freezes the public request and creates one caller-owned idempotency key. A bounded, account-bound recovery record is written before transport. Duplicate submission is locked while pending; network interruption, timeout, or malformed success remains outcome-uncertain and exposes only explicit same-envelope/same-key retry or warned abandonment.
+- Confirmed initial success and durable replay share the same authoritative result presentation and clear recovery. The result exposes only public unit/specification/process/execution identity, inspection attempt, timestamps, persisted evidence, and server-confirmed PASS/NG. TEXT distinguishes inspector input from confirmed outcome.
+- Added existing-route quality-history navigation and an explicit Inspect Again transition that retains selected context, clears evidence/time/review, and guarantees a fresh logical idempotency key.
+- Focused submission/recovery tests and the complete 201-test frontend suite pass, together with route type generation, TypeScript, ESLint, and production build. Fresh real HTTP/PostgreSQL verification is pending because the configured local PostgreSQL service was unavailable at `localhost:5432`; the already-verified Phase 5D backend was not changed.
+- Per user decision, all 5E-3/5E-4/5E-5 manual browser acceptance is batched into Phase 5E-6.
+
+#### Phase 5E-6 — Final Browser Acceptance & Reconciliation
+
+**Status: VERIFIED COMPLETE**
+
+##### Phase 5E-6A — Automated Integration Readiness & Final Pre-Acceptance Review
+
+**Status: AUTOMATED INTEGRATION VERIFIED**
+
+- The safety recheck found the established Homebrew PostgreSQL 17 cluster already live: the PID file matches the running postmaster, active child processes use the exact data directory, TCP listeners exist on both localhost families, and `/tmp/.s.PGSQL.5432` is active. The earlier in-sandbox `pg_isready` failure was caused by the managed environment denying local socket connections. No PID or database file was removed, and no start, reset, credential, configuration, migration, or data-recovery action was needed.
+- An approved local-connect check confirms PostgreSQL 17.11, database `battery_quality_traceability_dev`, and role `battery_quality_app`. The prefix-isolated synthetic HTTP harness passed 5/5 real NestJS/PostgreSQL cases covering authentication/RBAC, origin/CSRF/idempotency input, five typed submissions and authoritative outcomes, replay/conflict and user scope, safe lifecycle/context errors, authenticated attribution, and quality-history readback.
+- Recovery reconciliation fixed one approved-contract defect: `INSPECTION_WRITE_CONFLICT` now retains the frozen request/key for explicit same-key retry, and network, malformed-success, or unclassified server failures remain outcome-uncertain. Known transactional rejection codes, including `INSPECTION_PERSISTENCE_ERROR`, remain deterministic and clear the resolved recovery record.
+- Focused inspection frontend verification passes 51/51 tests; the previously completed full frontend suite remains 203/203, with route type generation, TypeScript no-emit, ESLint, and the webpack production build passing. The default Turbopack build remains environment-limited by denied temporary port binding. All 5E manual browser acceptance remains intentionally deferred to Phase 5E-6.
+
+##### Phase 5E-6B — Acceptance Data Readiness
+
+**Status: AUTOMATED ACCEPTANCE DATA READY**
+
+- The existing deterministic reference seed already supplies the complete browser matrix, so no fixture or application change was needed. `PACK-DEMO-ALPHA-RETEST` is the primary reusable PACK: it has public `DEMO_VERIFY` attempts 1/2 and `DEMO_RELEASE` attempt 1, allowing both null-execution and compatible-execution acceptance without confusing process attempts with inspection attempts.
+- Five PUBLISHED exact versions are available: `DEMO_NUMERIC_LEVEL` v1 (`10`–`20` `DEMO_UNIT`), `DEMO_BOOLEAN_READY` v1 (expected true), `DEMO_CATEGORY_STATE` v1 (`READY`/`REVIEW`), `DEMO_VISUAL_STATE` v1 (`CLEAR`/`DEMO_MARK`), and `DEMO_TEXT_NOTE` v1 (nonblank text plus inspector PASS/NG). All target PACK and use the matching public verification or release process.
+- The active fictional `accept_quality` account is present for browser acceptance; its password remains intentionally outside tracked files and documentation. Existing temporary HTTP-test accounts are prefix-isolated and cleaned after use.
+- Real verification passed 61/61 inspection-specification tests, 8/8 history HTTP tests, 15/15 traceability-detail tests, and 19/19 traceability/integrity tests. Final counts remain the deterministic `2/4/2/8/16/13/14/5/4/8/8` reference vector, with zero InspectionSubmission rows and zero temporary users/specifications; no inspection was submitted during readiness verification.
+- Phase 5E remains in progress. The consolidated ordinary and controlled-network browser acceptance matrix is ready but was not executed.
+- Phase 5E-6 manual acceptance found a blocking CORS preflight defect before the inspection POST reached NestJS: the frontend's required `Idempotency-Key` was absent from the API request-header allowlist. The minimal transport fix adds that header and shares the production CORS options with a database-free, browser-realistic OPTIONS regression covering the exact frontend origin, credentials, POST, `Content-Type`, `X-CSRF-Token`, and `Idempotency-Key`. Focused CORS tests pass 5/5 and the pure inspection-entry contract tests pass 12/12; type-aware lint and the NestJS production build pass. The unresolved browser recovery record and database remain untouched. Phase 5E stays in progress pending API reload and resumed manual acceptance.
+- Phase 5E-6 Test D3 manually confirms one `DEMO_VISUAL_STATE` v1 `CLEAR` submission returned the authoritative PASS result at inspection attempt 6 and that a rapid double-click produced only one observed attempt. Database-free D3 verification passes 12/12 backend contract tests, 43/43 focused frontend API/state/workspace tests, and the unchanged 203/203 full frontend suite; route type generation, TypeScript, ESLint, and the webpack production build pass. Existing isolated PostgreSQL and HTTP tests already cover durable same-key replay, different-payload conflict, and concurrent duplicate serialization, but were not rerun because the active manual-acceptance database must remain untouched. Controlled same-key lost-response/refresh recovery remains a manual acceptance gate, so neither Phase 5E-6 nor Phase 5E is complete.
+- Phase 5E-6 Test D4 manually confirms that QUALITY sees and can open Inspection Entry, while PRODUCTION, ENGINEERING, and ADMIN neither see its navigation item nor obtain the workspace through the direct localized URL. The backend controller requires `inspection:write`; the centralized role matrix grants it only to QUALITY and has no ADMIN bypass. Current database-free verification passes 18/18 backend permission/inspection-contract tests and 47/47 shell/workspace tests. The existing real HTTP inspection suite already covers unauthenticated 401 and ENGINEERING/ADMIN/PRODUCTION 403 before persistence; it was not rerun because its fixtures write temporary rows to the active manual-acceptance database. Test D4 is accepted without changing application code or data, while all unrelated Phase 5E manual gates remain pending.
+- Phase 5E-6 accessibility investigation records two implementation revisions without applying them. Revision 5 finds that Result type remains keyboard-focusable and uses the same two-pixel focus utility pattern as adjacent fields, but its blue ring is only 25% opacity; Safari's native select presentation can make that indicator insufficiently distinct. Revision 6 identifies an application focus-management defect: after each specification detail resolves, the workspace explicitly focuses the newly rendered criteria heading, moving focus out of the native radio group and causing the observed scroll; subsequent ArrowDown therefore cannot advance the group. Two characterization tests now protect the evidence and the focused workspace suite passes 30/30. The minimal future corrections are a stronger non-translucent select focus treatment and preservation of radio focus while criteria updates, followed by targeted Safari keyboard, scroll, responsive, and RTL retesting. Phase 5E-6 remains in progress.
+- Phase 5E-6 Test D6.4 verifies the authentication-data boundary without touching the active acceptance database. The server stores only a digest of each opaque session token, rejects missing, invalid, expired, revoked, and inactive-user sessions, revokes the server row on logout, and clears the host-only `HttpOnly`, `SameSite=Lax`, `Path=/` cookie with matching production `Secure` scope. Unsafe inspection writes remain ordered behind authentication, exact-origin/session-bound CSRF validation, and the QUALITY-only `inspection:write` permission. Focused database-free verification passes 10/10 backend session/permission tests and 21/21 frontend authentication/inspection-client tests; a new cookie regression covers development `Secure=false` and production logout clearing. The existing isolated E2E evidence covers durable revocation and rejection before persistence, but was not rerun against the active manual-acceptance database. D6.1-D6.4 are accepted; Phase 5E-6 remains in progress with all unrelated manual gates and deferred revisions 1-6 preserved.
+- Phase 5E-6 deferred UI Batch 1 implements Revisions 1 and 2 without changing backend or persistence contracts. Result Type now uses the same fixed 44px box model, typography, and vertical padding contract as the adjacent discovery controls. Inspection occurrence time now uses the established Genealogy-style segmented `DD/MM/YYYY, HH:mm` editor and synchronized bounded chooser instead of native `datetime-local`, while retaining local-wall-clock validation, explicit UTC serialization, locale-aware month names, keyboard focus/Escape behavior, responsive layout, and LTR-isolated technical editing within RTL pages. Clearing a segment invalidates the timestamp and blocks review; correcting or changing it restores the existing review/payload flow. Focused verification passes 38/38 and the full frontend suite passes 206/206; TypeScript, ESLint, and the webpack production build pass. Revisions 1 and 2 are implemented and automated-verified, but Safari desktop/mobile/RTL/keyboard acceptance remains pending; Revisions 3-6 remain unimplemented.
+- Phase 5E-6 deferred UI Batch 2 implements Revision 3 only. A bounded versioned ordinary-draft record in `sessionStorage` preserves safe public trace input, confirmed context identity, discovery filters, exact specification, optional execution, typed evidence, occurrence time, and review state across top-level workspace unmount/remount. It is bound to the existing one-way authenticated-account digest, validated as untrusted input, and conservatively re-resolves unit, discovery, exact specification, option ownership, and execution context before restoring editable state. Logout/session invalidation and confirmed success clear the ordinary draft. Its key and lifecycle remain completely separate from the frozen uncertain-submission record; restoration neither generates an idempotency key nor submits, retries, clears, or rewrites recovery. Focused verification passes 58/58 and the full frontend suite passes 210/210; TypeScript, ESLint, and the webpack production build pass. Revision 3 is implemented and automated-verified but Safari navigation acceptance remains pending; Revisions 4-6 remain unimplemented.
+- Phase 5E-6 deferred UI Batch 3 implements Revisions 4-6 only. Public trace codes now remain LTR-isolated in RTL layouts and include zero-width browser wrap opportunities after existing hyphens, preserving the exact identifier while preferring segment boundaries and retaining overflow protection. The Result Type native select keeps its Revision 1 dimensions and now uses an opaque two-pixel blue focus ring plus matching focus border. Exact-specification detail loading no longer transfers focus to the criteria heading, so the selected native radio retains focus while criteria update and no application-authored focus scroll occurs. Focused verification passes 51/51 and the complete frontend suite passes 211/211; route generation, TypeScript no-emit, ESLint, and the webpack production build pass. Revisions 4-6 are implemented and automated-verified, while Safari mobile RTL wrapping, select focus visibility, native radio Arrow-key navigation, and scroll behavior remain manual-acceptance pending. Phase 5E-6 and Phase 5E remain in progress.
+- Phase 5E-6 final automated readiness records D7 and D8 as automated-ready only; no Safari PASS is claimed. Revisions 1-6 retain focused regression coverage, and the workflow suite covers optional process execution, Inspect Again with a fresh logical key, account-bound ordinary-draft restoration, logout/account isolation, and separate same-key uncertain-submission recovery. D8.4 now deterministically verifies the combined PACK discovery request `query=level`, `resultType=NUMERIC`, and `processCode=DEMO_VERIFY`, rendering exactly `DEMO_NUMERIC_LEVEL` v1 and removing the prior unrelated result. The affected workspace test passes 33/33; the freshly rerun database-free frontend suite passes 211/211, with TypeScript no-emit, ESLint, route generation, and the webpack production build passing. Consolidated Safari UI/interaction acceptance and the separate controlled lost-response/recovery session remain pending, so Phase 5E-6 and Phase 5E remain in progress.
+- Safari Session A now user-confirms exact trace validation for `PACK-DEMO-ALPHA-RETEST`; the combined `level` + `NUMERIC` + `DEMO_VERIFY` discovery result; Revision 1 control height; Revision 5 visible keyboard focus; Revision 6 native radio Arrow-key navigation without the prior scroll jump; Revision 2 segmented occurrence-time editing; optional execution default plus distinct `DEMO_VERIFY` process attempts 1/2; and Revision 3 navigation-away/return draft restoration. The approximately 375px Arabic RTL observation confirms LTR identifier ordering, full visibility, and no visible overflow, but does not establish preferred hyphen-boundary wrapping unless an actual wrap is observed. Draft cross-account isolation also remains automated-only; the earlier D6 logout evidence verifies authentication/session protection, not a manual cross-account draft-restoration attempt.
+- Safari Session B confirms a controlled successful `POST /inspections` response was withheld from the application after Network recorded HTTP 201, the UI entered unresolved recovery, refresh restored that recovery, explicit retry returned the authoritative `DEMO_TEXT_NOTE` v1 PASS result at inspection attempt 4, and a later refresh no longer restored recovery. The user subsequently confirmed through Quality History that duplicate prevention passed for the recovered attempt. This is recorded as user-reported manual PASS, not independent database verification. Together with isolated PostgreSQL idempotency coverage, it closes the lost-response/replay gate.
+- The final evidence audit removes redundant manual retests. Revision 4 is accepted from deterministic exact-value/LTR/`<wbr>` coverage plus Safari confirmation of correct direction, full visibility, and no overflow at approximately 375px; an artificially narrower wrap is optional. Revision 3 account isolation/logout, selected-execution request propagation, and Inspect Again key rotation are deterministic security/state contracts already covered by focused tests, while Safari separately passed navigation restoration, logout protection, and execution selection. No further inspection submission is required for those items. The sole mandatory manual gap is Indonesian Inspection Entry presentation and locale handoff; it can be verified with an unsent draft. Phase 5E-6 and Phase 5E remain in progress only for that consolidated locale check.
+- Final Safari acceptance user-confirms the Indonesian locale gate: a QUALITY user confirmed `PACK-DEMO-ALPHA-RETEST`, selected `DEMO_NUMERIC_LEVEL` v1, entered valid unsent evidence and occurrence time, switched from English to Indonesian, and observed the Indonesian presentation with the draft preserved and no inspection submission. This closes the last mandatory manual gap. All Phase 5E-1 through 5E-6 contract, automated integration, security, recovery/idempotency, responsive/RTL/accessibility, localization, and browser gates now have sufficient evidence. Phase 5E-6 and overall Phase 5E are VERIFIED COMPLETE. At that checkpoint Phase 5F was next; it is now also verified complete below.
+
+### Phase 5F — Phase 5 Integration & History Reconciliation
+
+**Status: VERIFIED COMPLETE**
+
+#### Phase 5F-1A — Isolated PostgreSQL Test Database Provisioning
+
+**Status: VERIFIED COMPLETE**
+
+- Provisioned the separate local `battery_quality_traceability_test` database without cloning, resetting, reseeding, or otherwise changing `battery_quality_traceability_dev`. The existing `battery_quality_app` role owns both databases, while every integration command receives an explicit test-only `DATABASE_URL`.
+- Added a reusable pre-test identity guard that queries `current_database()` and accepts only the exact isolated database name. It passed against the test database and safely rejected the development database before mutation.
+- Applied the existing eight migrations and deterministic reference seed only to the isolated target. Prisma reports the schema current; the expected `2/4/2/8/16/13/14/5/4/8/8` reference vector, zero users, zero submission rows, and integrity `9/9` are present.
+- Read-only comparison confirmed the active development acceptance database retained its existing inspection/submission counts and `accept_quality` account. No Phase 5F integration test was run in this provisioning subphase.
+
+#### Phase 5F-1B — Cross-Layer History Integration Test
+
+**Status: VERIFIED COMPLETE**
+
+- Added one guarded real-HTTP/PostgreSQL scenario that authenticates QUALITY, rejects unauthenticated and PRODUCTION writes before persistence, submits PASS evidence with an exact process execution, replays it with the same key, and submits a separate NG attempt without execution context.
+- The scenario proves atomic Inspection/Result/Submission persistence, authoritative outcomes, exact specification/version and occurrence-time preservation, sequential attempts, Quality History readback without duplicates, Process History reference consistency and immutability, no automatic Nonconformance, unchanged reference NC lifecycle history, and unchanged historical genealogy/replacement evidence.
+- Database identity protection is inside the test process before Nest startup or fixture cleanup, in addition to the guarded package command. Direct execution therefore cannot mutate a database unless `current_database()` is exactly `battery_quality_traceability_test`.
+- The focused scenario passes 1/1. Directly affected inspection persistence, inspection HTTP, history HTTP, and traceability/integrity suites pass 52/52, for 53/53 tests across seven files. Cleanup removes every test-prefixed unit, specification, inspection/result/submission, execution, session, and user; the deterministic reference vector and integrity 9/9 remain unchanged.
+- TypeScript no-emit, type-aware lint, NestJS production build, and diff checking pass. No production code, schema, migration, public contract, feature, or manual browser behavior changed.
+
+At the Phase 5F-1 checkpoint, overall Phase 5F-1 was **VERIFIED COMPLETE** and Phase 5F-2 was next. Phase 5F-2 and Phase 5F-3 are now also verified complete below.
+
+#### Phase 5F-2 — History Presentation & Navigation Reconciliation
+
+**Status: VERIFIED COMPLETE**
+
+- Reconciled the existing Inspection Entry result handoff with the localized Unit Detail route and the stable `#quality-history-title` destination. The link carries the public trace code only; it adds no route, internal identifier, or alternate history path.
+- Focused frontend evidence now explicitly covers exact historical specification code/version, inspection attempt, occurrence timestamp, numeric decimal text/unit, all five evidence discriminators, linked and null optional process-execution context, and the separation of an NG inspection from an empty Nonconformance history.
+- Existing Phase 4H coverage continues to prove independent Process, Quality, and Nonconformance loading; bounded pagination and filters; loading/empty/error/Retry states; sibling failure isolation; retained NC action/retest/verification/disposition evidence; localization, RTL, keyboard, focus, and responsive presentation. Historical values remain rendered from their stored public response and are not re-evaluated against a newer specification.
+- Focused inspection/history reconciliation passes 83/83 tests; the relevant Traceability regression passes 100/100; and the complete database-free frontend suite passes 213/213. Route generation, TypeScript no-emit, ESLint, the webpack production build, and diff checking pass.
+- No production UI, API contract, route, database, or browser-visible behavior changed. Existing Phase 4H and Phase 5E Safari evidence therefore remains applicable and no additional manual acceptance is required.
+
+#### Phase 5F-3 — Final Regression & Documentation Reconciliation
+
+**Status: VERIFIED COMPLETE**
+
+- Every database-mutating command used an explicit local `battery_quality_traceability_test` URL and passed the exact-name identity guard before its test runner. The development `.env` remained unchanged and was never used as a fallback.
+- Phase 5-focused backend regression passes 114/114 tests. Authentication, authorization, CSRF/security, Traceability, genealogy, and history regression passes 113/113. The complete backend suite passes 118/118 and the sequential backend E2E suite passes 79/79.
+- Prisma validation passes; all eight migrations are applied; schema-drift comparison reports no difference. Post-test cleanup returns the isolated database to zero users and submissions, eight inspections/results, five specifications, the deterministic reference fixture vector, and integrity 9/9.
+- The complete database-free frontend suite passes 213/213. Backend and frontend TypeScript checks, type-aware Oxlint, ESLint, NestJS build, Next.js route generation, the webpack production build, and diff checking pass.
+- No production code, public contract, schema, migration, database record, or browser-visible behavior changed during closure. Existing Phase 4H and Phase 5E Safari acceptance remains applicable; no additional manual acceptance is required.
+
+Overall Phase 5F is **VERIFIED COMPLETE**. Phase 5G is also verified complete below. Overall Phase 5 remains **IN PROGRESS** for Phase 5H.
+
+### Phase 5G — Public Synthetic Data & Reviewer Support
+
+**Status: VERIFIED COMPLETE**
+
+- Preserve the small deterministic reference seed.
+- Add a separate configurable deterministic large synthetic generator capable of thousands of fictional packs and related genealogy/history evidence.
+- Add `docs/SYNTHETIC_TEST_DATA.md` with curated known-good scenarios and an unobtrusive Traceability Search sample-code affordance.
+- Generate at least a representative Medium profile before establishing measured performance targets or indexes.
+
+#### Phase 5G-0 — Public Synthetic Data & Reviewer Support Discovery
+
+**Status: COMPLETE / REVIEWED**
+
+- Confirmed that Phase 5G must preserve the small reference seed while adding a separate thousands-capable deterministic generator, curated reviewer guidance, one unobtrusive Traceability Search sample-code affordance, and Medium-profile measurement before optimization.
+- Confirmed that no generator, generated namespace, Medium profile, reviewer data guide, or sample-code affordance existed at discovery. Date ranges, analytics, anonymous access, new APIs, schema redesign, and speculative indexes remain outside this phase.
+
+#### Phase 5G-1 — Generator Contract & Safety Foundation
+
+**Status: VERIFIED COMPLETE**
+
+- Added a versioned pure generator contract with strict `SMALL`, `MEDIUM`, and `LARGE` profiles, explicit lowercase deterministic seeds, unmistakable `SYN5G_*` namespaces, bounded pack/relationship overrides, and dry-run planning that performs no I/O.
+- Fixed profile defaults at 100, 2,000, and 10,000 packs, with a hard custom maximum of 25,000 and documented bounded related volumes. The Medium profile satisfies the required thousands-of-packs baseline; Large remains bounded higher-volume evidence rather than an unbounded load command.
+- SHA-256-derived resolved namespaces, UUID-shaped internal identities, public codes, timestamps, scenario selection, exact planned counts, and canonical plan fingerprints are stable across wall-clock and locale changes. Different seeds receive different resolved namespaces.
+- Established exact identity/fingerprint ownership classification for create/reuse/conflict. Partial reruns may reuse only canonically matching rows; incompatible identities must stop without overwrite. Cleanup is explicitly unimplemented and future cleanup may use only verified exact plan identities, never reset/truncate or prefix-only deletion.
+- Generator mutation safety accepts only an explicit `battery_quality_traceability_test` URL and passes that same URL to the established live identity guard. Missing, malformed, development, and unknown targets are rejected before verification; dry-run planning never connects.
+- Focused generator tests pass 21/21 and the affected pure inspection/safety regression passes 33/33. TypeScript no-emit, type-aware Oxlint, NestJS production build, and diff checking pass. No database, Prisma schema, migration, reference fixture, production behavior, or Medium/Large dataset changed.
+- Added `docs/SYNTHETIC_TEST_DATA.md` with the fictional-data boundary, configuration and deterministic ownership contracts, safety policy, curated existing trace scenarios, and remaining implementation gates.
+
+Phase 5G-2 is next / not started. Overall Phase 5G and Phase 5 remain in progress.
+
+#### Phase 5G-2A — Guarded Persistence & Ownership Foundation
+
+**Status: VERIFIED COMPLETE**
+
+- Added the minimal persisted subset: one deterministic generator-owned product model and bounded SMALL-profile PACK units only. No genealogy, process, inspection, NC, rework, retest, verification, disposition, Medium, or Large data is generated.
+- Mutation functions require an explicit `battery_quality_traceability_test` URL, execute the established live identity guard before Prisma construction, use that same URL, and never fall back to development configuration.
+- Resolved-namespace advisory locking and in-transaction preflight classify deterministic IDs, public codes, canonical fields, timestamps, and relationships before bounded creation. Exact reruns reuse without duplicates; compatible partial rows are reused; any incompatible identity refuses the whole transaction without overwrite.
+- Explicit cleanup requires the exact plan fingerprint, complete exact ownership, no PACK dependants, no product route, and no extra product-owned pack. It deletes only regenerated exact IDs in dependency-safe 100-row batches and exposes no prefix, truncate, reset, or reseed operation.
+- The isolated PostgreSQL suite passes 5/5, including a full 100-pack SMALL cycle. Cleanup restores zero generated products/units, preserves two reference products and 16 reference units, and retains integrity 9/9. Database-free generator contract and persistence-boundary tests pass 25/25; complete backend regression, TypeScript, type-aware lint, NestJS build, and diff hygiene pass.
+
+Phase 5G-2B is next / not started. Overall Phase 5G and Phase 5 remain in progress.
+
+#### Phase 5G-2B — Connected Genealogy Generation
+
+**Status: VERIFIED COMPLETE**
+
+- Extended the single guarded persistence path to deterministic MODULE, CELL, COMPONENT, MATERIAL, and active genealogy rows using only the existing `TraceableUnit` and `GenealogyRelation` models. Relationship direction is PACK→MODULE and MODULE→CELL/COMPONENT/MATERIAL.
+- The SMALL defaults create exactly 100 packs, 100 modules, 400 cells, 100 components, 100 materials, and 700 relations. Every non-pack has one planned parent, positions are parent-local, all endpoints are plan-owned, and cycle detection reports none.
+- Versioned ownership covers every exact product, unit, and relationship field. Bounded in-transaction preflight checks IDs, public trace codes, composite relationship identities, positions, intervals, and timestamps before writing units then edges. Exact reruns create nothing; compatible partial graphs recover missing rows; unit or edge conflicts refuse without partial commit.
+- Explicit cleanup verifies the complete plan, exact expected parent/child counts, absence of downstream process/quality/NC/action dependencies, no product route or extra pack, and the plan fingerprint. It deletes exact edges before exact units and the product, with no prefix deletion or broad operation.
+- Guarded isolated PostgreSQL tests pass 6/6, existing traceability passes 19/19, and detail/genealogy passes 15/15. The database returns to zero generated product/unit/relation rows, reference counts remain unchanged, and integrity passes 9/9. Database-free generator tests, full backend regression, TypeScript, type-aware lint, NestJS build, formatting, and diff hygiene pass.
+
+Phase 5G-2C is next / not started. Overall Phase 5G and Phase 5 remain in progress.
+
+#### Phase 5G-2C — Deterministic Process History Generation
+
+**Status: VERIFIED COMPLETE**
+
+- Added generator-owned PREPARE, ASSEMBLE, VERIFY, and RELEASE definitions, one product-bound version-1 route, and four ordered route steps. This avoids coupling generated products to or mutating the shared reference process configuration.
+- The fixed SMALL acceptance seed deterministically yields 68 standard, 22 verify-retry, and 10 extended multi-attempt packs. It creates 442 COMPLETED PACK executions: 400 route-linked first attempts and 42 schema-supported nullable-route retry attempts, with stable methods, attempts, and timestamps. Process completion is not treated as Inspection PASS.
+- Versioned ownership and bounded preflight cover exact configuration identities/fields plus execution ID and `(unit, process, attempt)` identity. Exact rerun creates nothing; partial configuration/execution recovery reuses exact rows; conflicting execution history refuses without overwrite or partial commit.
+- Cleanup verifies complete ownership, expected execution counts per unit/step/definition, no Inspection/NC dependants, one exact route and four exact steps, then deletes executions, genealogy/units, steps, route, definitions, and product in foreign-key-safe order.
+- Guarded isolated persistence tests pass 7/7, Process History HTTP contracts pass 8/8, traceability passes 19/19, and detail/genealogy passes 15/15. Cleanup restores zero generated process/graph rows, preserves all reference fixtures, and retains integrity 9/9. Database-free generator tests, full backend regression, TypeScript, type-aware lint, NestJS build, formatting, and diff hygiene pass.
+
+Phase 5G-2C is **VERIFIED COMPLETE**.
+
+#### Phase 5G-2D — Deterministic Inspection & Quality History Generation
+
+- Added five separate generator-owned, PUBLISHED version-1 specifications on the owned VERIFY process: NUMERIC, BOOLEAN, CATEGORICAL, VISUAL, and TEXT. The exact plan also owns four categorical/visual options and a disabled, non-login QUALITY attribution actor; no shared `DEMO_*` configuration or account is reused.
+- Inspection evidence is planned through the production parser, fingerprint, and evaluation utilities. Each aggregate atomically persists one immutable Inspection, one typed InspectionResult, and one InspectionSubmission. Attempts are unit/specification scoped, optional execution links use the generated VERIFY attempts, and later PASS retests never rewrite prior NG evidence.
+- For the fixed 100-pack 2D acceptance seed, the exact output is five specifications, four options, 523 inspection/result/submission aggregates, 500 PASS and 23 NG. Type counts are 105 NUMERIC, 103 BOOLEAN, 106 CATEGORICAL, 104 VISUAL, and 105 TEXT; 273 inspections have process context and 250 intentionally have none. No Nonconformance is created.
+- Exact ownership preflight covers specification identity/configuration, options, inspection attempt identity, typed results, submissions, timestamps, and canonical fingerprints. Reruns reuse every row, compatible missing aggregates recover, incompatible identities refuse before quality writes, and cleanup refuses unexpected sessions or downstream NC/action/verification dependencies.
+- The guarded isolated PostgreSQL generator suite passes 11/11. Existing quality persistence, specification, inspection service/HTTP, and Traceability suites pass 132/132; the cross-layer history contract passes 1/1 and sequential HTTP E2E passes 79/79. Cleanup restores zero generated quality/process/genealogy rows, preserves the reference data, and retains deterministic integrity 9/9.
+
+Phase 5G-2D is **VERIFIED COMPLETE**.
+
+#### Phase 5G-2E — Deterministic Nonconformance & Rework Lifecycle Generation
+
+- Added a generator-owned lifecycle layer using only the existing `OPEN`, `RESOLVED`, and `CLOSED` statuses; supported inspection/process sources; existing abnormal-case, action, verification, and disposition models; and existing public Nonconformance History contracts. Production inspection behavior remains unchanged and NG still does not automatically create NC.
+- The fixed 100-pack acceptance seed yields 77 clean packs without NC, 14 NG/retest packs without NC, and nine separately created NC histories: three OPEN, three RESOLVED correction/retest cases, and three CLOSED escalated REWORK/retest cases.
+- The exact plan creates five defect categories, nine NCs, three abnormal cases, 15 actions (three CORRECTION, three literal REWORK, six RETEST, three ESCALATION), six PASS-retest verifications, and nine dispositions (six CONTINUE, three RETURN_IQC). Original NG inspections remain immutable and every retest/verification references the separate PASS attempt.
+- Exact ownership preflight covers every source, relationship, lifecycle field, timestamp, event, and public identity. Reruns create no duplicates, compatible missing lifecycles recover without rewriting retained history, conflicts refuse before lifecycle writes, and cleanup refuses unexpected dependent events before deleting exact rows in foreign-key order.
+- The guarded generator suite passes 15/15, focused affected regressions pass 148/148, sequential HTTP E2E passes 79/79, and the complete backend unit suite passes 143/143. Cleanup restores zero generator-owned rows, preserves reference fixtures, and retains integrity 9/9.
+
+Phase 5G-2E is **VERIFIED COMPLETE**.
+
+#### Phase 5G-3A — MEDIUM Profile Readiness & Guarded Execution
+
+**Status: VERIFIED COMPLETE**
+
+- Enabled only the exact documented MEDIUM defaults: 2,000 PACKs, two MODULEs per pack, eight CELLs per module, two COMPONENTs per module, and one MATERIAL per module. Custom MEDIUM and LARGE persistence remain refused.
+- Corrected the pure planner's materialized-count contract to exclude unsupported replacement units and include the configuration, actor, submission, and category rows actually persisted. The deterministic MEDIUM plan contains 139,671 non-aggregate rows, including 50,000 units, 48,000 genealogy relations, 8,827 executions, 10,622 inspection/result/submission aggregates, and 205 NC lifecycles.
+- Preserved the live isolated-database guard, same-URL Prisma connection, advisory locking, canonical ownership/collision preflight, 100-row writes, and exact-fingerprint cleanup. Bounded 500-row ownership reads and MEDIUM transaction timeouts make preflight and cleanup possible without weakening ownership.
+- Controlled execution in `battery_quality_traceability_test` matched every expected count. Generation completed in 34.89 seconds; exact rerun created no duplicates; a bounded lifecycle gap recovered exactly its missing records; a deliberate conflicting MEDIUM product identity was refused before unit writes; exact cleanup removed all 139,671 rows. Generator-owned residuals are zero and reference integrity remains 9/9.
+- Generator contract tests pass 26/26, guarded persistence tests pass 15/15, and traceability/process/quality/NC regression passes 19/19. TypeScript, type-aware lint, NestJS build, formatting, and diff hygiene pass.
+
+Phase 5G-3 remains **IN PROGRESS**. Phase 5G-3B measured query evidence is next / not started. Overall Phase 5G and Phase 5 remain in progress.
+
+#### Phase 5G-3B — MEDIUM Profile Query Measurement
+
+**Status: VERIFIED COMPLETE**
+
+- Regenerated the exact 139,671-row MEDIUM plan once in the guarded isolated database and retained it for the complete read-only session. Measurements used one warm-up plus five service/Prisma repetitions on a documented Apple M1 Pro / 16 GB / PostgreSQL 17.11 environment.
+- Verified Traceability Search, Unit Detail, forward/reverse bounded genealogy, paginated Process/Quality/NC History, specification discovery/detail, exact idempotency replay lookup, and dashboard aggregation. Median service times ranged from 1.178–18.610 ms except the independently measured replay lookup at 1.311 ms; pagination was stable and public responses exposed no UUID.
+- Read-only `EXPLAIN (ANALYZE, BUFFERS)` evidence showed indexed unit, genealogy, per-unit history, and idempotency access. Dashboard inventory scanned 50,016 unit-type index entries in 11.344 ms; dashboard recent activity sequentially scanned 8,841 executions with a 26 KB top-N sort in 1.731 ms. No measurement justifies a speculative index or query change in this subphase.
+- Exact cleanup removed all 139,671 generated rows in 19.65 seconds. Final generator-owned product, unit, specification, submission, and NC counts are zero; reference integrity remains 9/9.
+- Generator and guarded persistence tests pass 41/41; Traceability Search, detail, and history regression passes 58/58; TypeScript, type-aware lint, NestJS build, formatting, and diff hygiene pass.
+
+Phase 5G-3B is **VERIFIED COMPLETE**. Overall Phase 5G-3 is **VERIFIED COMPLETE**. Overall Phase 5G and Phase 5 remain in progress.
+
+#### Phase 5G-4 — Reviewer Guidance & Sample-Code Affordance
+
+**Status: VERIFIED COMPLETE**
+
+- Added one compact, collapsed fictional-sample affordance to the existing authenticated Traceability Search. It offers the stable reference codes `PACK-DEMO-ALPHA-PASS`, `PACK-DEMO-ALPHA-RETEST`, and `PACK-DEMO-BETA-ESCALATED` with evidence-backed Clean PASS, NG/retest, and escalated NC/rework descriptions.
+- Selecting a sample only fills the existing trace-code field. It does not search, navigate, mutate data, clear the unit-type/product-model filters, expose credentials/internal identifiers, or introduce a second workflow, route, API, or authentication mode.
+- English and Indonesian reviewer copy is complete. Other registered locales retain the established English fallback; Arabic retains RTL layout while sample identifiers use exact LTR isolation and bounded hyphen-aware wrapping.
+- Focused Traceability Search verification passes 20/20 and the complete database-free frontend suite passes 216/216. Next route generation, TypeScript no-emit, ESLint, the webpack production build, and diff hygiene pass.
+- User-confirmed Safari acceptance passes the compact disclosure and all three curated scenarios; exact sample filling without automatic search/navigation; preservation of unit-type and product-model filters; Search and Unit Detail navigation including the escalated-NC story; and unchanged manual trace-code entry/search.
+- English and Indonesian guidance, Arabic RTL with LTR-isolated identifiers, keyboard Tab/Enter operation with visible focus, and the responsive 375×812 layout pass. A supplied screenshot confirms the three sample cards stack vertically without visible overflow, and no blocking UI defect was reported.
+- Added and validated `docs/LOCAL_DEVELOPMENT_AND_TESTING.md` plus concise README links. The guide records dependency and PostgreSQL readiness checks, safe ignored environment setup, explicit backend environment loading, frontend startup, health/login diagnostics, curated reviewer navigation, the accepted Safari checklist, and safe stop/restart procedures without publishing credentials.
+
+Phase 5G-4 is **VERIFIED COMPLETE**. Overall Phase 5G and Phase 5 remain **IN PROGRESS**.
+
+#### Phase 5G-5 — Final Phase 5G Reconciliation
+
+**Status: VERIFIED COMPLETE**
+
+- Reconciled the complete Phase 5G contract: deterministic SMALL/MEDIUM planning and persistence, disabled LARGE persistence, namespace/fingerprint ownership, collision refusal, idempotent rerun, partial recovery, exact dependency-aware cleanup, connected genealogy/process/quality/NC history, measured MEDIUM reads, reviewer samples, and local-development guidance.
+- The explicit live guard confirmed `battery_quality_traceability_test` before every database-backed command. Guarded SMALL persistence passes 15/15 and cleans its exact plan; final read-only counts show zero `SYN5G_*` product, unit, specification, submission, and NC anchors. The unchanged reference evidence passes integrity 9/9. The development database was not targeted, and MEDIUM was not regenerated.
+- Generator contracts pass 26/26; complete backend unit regression passes 144/144; Traceability/genealogy/history passes 19/19; focused inspection HTTP passes 5/5; sequential HTTP E2E passes 79/79; focused reviewer support passes 20/20; and the complete frontend suite passes 216/216.
+- Backend and frontend TypeScript, type-aware Oxlint, ESLint, route generation, NestJS/Next.js production builds, Phase 5G generator formatting, and diff hygiene pass. A repository-wide backend Prettier audit still reports 53 pre-existing generated/unrelated files; no Phase 5G generator file is among them, and no unrelated formatting rewrite was made.
+- Security review confirms no database-guard fallback, prefix-only cleanup, unrelated deletion, automatic production NC behavior, new unauthorized route/API, credential disclosure, public UUID exposure, RBAC weakening, schema change, or production-query modification from Phase 5G.
+- Phase 5G-4 Safari acceptance remains applicable because Phase 5G-5 changes documentation only and introduces no browser-visible behavior.
+
+Phase 5G-5 and overall Phase 5G are **VERIFIED COMPLETE**. Overall Phase 5 remains **IN PROGRESS**. Phase 5H-0 discovery/inventory is now complete and reviewed below.
+
+### Phase 5H — Final Acceptance & Reconciliation
+
+**Status: VERIFIED COMPLETE**
+
+#### Phase 5H-0 — Final Acceptance Discovery & Inventory
+
+**Status: COMPLETE / REVIEWED**
+
+- Confirmed that Phase 5A discovery is complete/reviewed and Phase 5B through Phase 5G are verified complete. Phase 5E and Phase 5G-4 contain the required user-confirmed Safari evidence; backend-only, contract, database-safety, test-only, measurement, and documentation checkpoints require no separate browser gate.
+- Consolidated evidence covers schema/migration and deterministic-reference integrity; specification lifecycle and concurrency; atomic five-type inspection entry, idempotency, security, recovery, and Quality History; integrated Process/Quality/NC/Traceability presentation; isolated cross-layer PostgreSQL verification; deterministic SMALL/MEDIUM generation, exact ownership/cleanup, measured reads; and accepted reviewer guidance.
+- No mandatory manual acceptance remains unless Phase 5H introduces an unexpected browser-visible correction. Already accepted Safari flows must not be repeated without a demonstrated regression.
+- Reviewed the accumulated dirty tree: 32 tracked files and 59 untracked files map to the documented Phase 5 quality schema/API, guarded database/test/generator infrastructure, inspection frontend/recovery, reviewer support, and source-of-truth documentation. No generated build output, log, cache, temporary file, secret, or unrelated feature change was identified. Staging remains empty and the committed baseline remains `73b0e14f4aa41949d68e2862984526643ed2bdd1`.
+- Final closure still requires one Phase-wide guarded regression/security/diff audit and a final documentation/status reconciliation. Repository-wide backend Prettier currently reports historical generated/unrelated formatting debt; Phase 5G-owned files pass scoped formatting, so Phase 5H must report rather than silently rewrite unrelated files.
+- Reconciled stale current-status statements that still described Phase 5 as contract-only or Phase 5H as not started. Historical checkpoint statements remain intact. Final security evidence still requires the Phase 5H-1 full-diff secret/privacy/RBAC/database-guard audit.
+
+#### Phase 5H-1 — Final Phase 5 Regression & Safety Audit
+
+**Status: VERIFIED COMPLETE**
+
+- The minimum non-duplicative final regression passes: generator contracts 26/26, complete backend unit tests 144/144, guarded synthetic persistence/cleanup 15/15, sequential HTTP E2E 79/79, focused specification tests 61/61, focused quality persistence tests 27/27, and the complete database-free frontend suite 216/216.
+- Every database-backed command received the same explicit isolated URL and passed the live exact-name guard for `battery_quality_traceability_test` before Prisma or test execution. Prisma validates, all eight migrations are current, schema drift is empty, final generator anchor counts are zero, and deterministic reference integrity passes 9/9. No migration, reset, truncate, reseed, MEDIUM regeneration, or development-database access occurred.
+- Backend and frontend TypeScript, type-aware Oxlint, ESLint, route generation, NestJS/Next.js webpack production builds, expanded Phase 5-owned formatting, and `git diff --check` pass. The expanded formatting audit found and corrected style only in two Phase 5 quality test files; their guarded suites were rerun successfully, with no production or browser-visible behavior change.
+- Full tracked/untracked security and scope review found no credential or environment-file inclusion, database-guard bypass, prefix-only/destructive generator cleanup, automatic production NC behavior, authentication/RBAC/session/CSRF/CORS weakening, idempotency/concurrency regression, public UUID/private-data exposure, unintended anonymous route, unsafe migration/schema drift, generated artifact, or unrelated feature. Documented connection strings contain placeholders only.
+- The non-failing PostgreSQL client concurrent-query deprecation warning remains a future dependency/test-harness maintenance risk. Accepted Phase 5E and Phase 5G-4 Safari evidence remains sufficient because this checkpoint changed no browser-visible behavior.
+
+#### Phase 5H-2 — Final Documentation, Change Inventory & Phase 5 Closure
+
+**Status: VERIFIED COMPLETE**
+
+- Reconciled all current Phase 5 status statements while preserving historical checkpoints and their exact evidence. Phase 5A is complete/reviewed; Phase 5B through Phase 5G and Phase 5H-1 are verified complete; all required Phase 5E and Phase 5G-4 Safari gates are accepted; and no manual gate remains.
+- Final inventory covers 32 tracked modifications and 59 untracked additions across the quality schema/migration, backend specification/inspection services, security/CORS/idempotency, Inspection Entry frontend, deterministic generator, reviewer support, tests/fixtures, and documentation. There are no deletions, staged files, unexpected files, generated artifacts, committed environments, or out-of-scope features.
+- Final documentation/link/exclusion/secret and diff-hygiene checks pass. Phase 5H-1 already established the exact isolated-database guard, zero generator anchors, reference integrity 9/9, current eight-migration schema with no drift, complete automated regression, and no unresolved security or database blocker.
+- The final pre-commit review found one runtime-only cleanup confirmation gap: the quality and NC cleanup layers checked the exact plan fingerprint but relied on TypeScript for the literal `CLEANUP` operation. Both layers now enforce the operation and fingerprint before Prisma construction or database access, using the established `PLAN_CONFIRMATION_MISMATCH` refusal. Database-free regression coverage rejects wrong, missing, and malformed operations plus wrong fingerprints; 30/30 generator contract/unit tests and all 15/15 guarded persistence/cleanup integration tests pass against the exact isolated database.
+- The accumulated tree is ready for a separately authorized full-Phase-5 staging and local commit checkpoint. No staging, commit, push, or remote modification occurred during Phase 5H.
+
+Phase 5H-2, overall Phase 5H, and overall Phase 5 are **VERIFIED COMPLETE**. Phase 6 — Nonconformance & Rework remains the next documented roadmap phase and is **PLANNED / NOT STARTED**.
+
+Approved From → To event filtering remains deferred from the Phase 5 critical path. Its preferred future contract uses timezone-qualified `from`/`to` instants and half-open `[from, to)` semantics. Genealogy Current/Historical/As-of semantics remain separate.
 
 ## Phase 6 — Nonconformance & Rework
 

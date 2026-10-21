@@ -41,7 +41,7 @@ The three conceptual roles are:
 - Record abnormal dispositions and engineering decisions
 - Administer users and roles
 
-These roles describe intended responsibilities. Exact permissions are not finalized and will be refined during Phase 3, Authentication & RBAC.
+These roles describe intended responsibilities. The implemented permission map remains default-deny. Phase 5B-2 assigns `inspection-specification:manage` to `ENGINEERING` and retains `inspection:write` for `QUALITY`; `ADMIN` has no implicit superuser bypass.
 
 ## MVP feature areas
 

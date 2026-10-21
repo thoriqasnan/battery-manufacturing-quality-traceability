@@ -75,7 +75,7 @@ Operator attribution is deferred until Phase 3 supplies authenticated identity. 
 
 Phase 2D separates `InspectionSpecification`, `Inspection`, and `InspectionResult`. Specifications are reusable configuration; inspections are immutable-oriented historical events; results are the observed typed evidence. Quality outcomes use `PASS` or `NG` and remain distinct from process-execution lifecycle status.
 
-Inspection specifications use a stable code and explicit positive version. An inspection references the exact version row, so retests and historical evidence do not switch to a newer specification. Published or used versions and their stable-code categorical/visual options are treated as immutable; a future quality service will enforce new-version creation rather than mutation.
+Inspection specifications use a stable code and explicit positive version. An inspection references the exact version row, so retests and historical evidence do not switch to a newer specification. Phase 5's authoritative lifecycle/versioning contract is defined in `docs/QUALITY_INSPECTION.md`: a version progresses `DRAFT -> PUBLISHED -> RETIRED`; only published versions accept new evidence; published/retired criteria and options are immutable; changed acceptance definitions require a new positive version.
 
 Inspection supports these stable value types:
 
@@ -95,7 +95,7 @@ Inspection scope may be a cell, module, pack, or component/material unit. Qualit
 
 Later passing rework, retest, or reinspection must append new history; it must not overwrite earlier inspection or NG records.
 
-The future quality service must atomically create exactly one result for each inspection, compute or validate the outcome against the versioned configuration, prevent mutation of used specification versions/options, and later attach actor identity. These cross-row lifecycle rules are intentionally not implemented as PostgreSQL triggers in Phase 2D.
+The Phase 5 quality service must atomically create exactly one result for each inspection, serialize attempts per traceable unit and exact specification version, enforce durable submission idempotency, and attach the authenticated inspector. It computes numeric, Boolean, categorical, and visual outcomes from the exact published configuration; text evidence requires an explicit validated PASS/NG because free text has no objective acceptance rule. Phase 5B-2 now provides lifecycle, inspector, and idempotency persistence; the cross-row mutation and transition rules remain application-service work for later subphases rather than PostgreSQL triggers.
 
 ## Abnormal Case / Nonconformance
 
@@ -200,4 +200,4 @@ Direct parent/child counts describe relationships under the requested scope and 
 
 The application user is a separate security identity, not a traceable manufacturing unit or a free-text operator name. The minimal fictional roles are `ADMIN`, `QUALITY`, `PRODUCTION`, and `ENGINEERING`; their permission bundles are defined in `docs/ARCHITECTURE.md`. Roles grant eligibility to request an operation, while domain services remain responsible for valid state transitions and evidence relationships.
 
-Phase 3B now provides the stable internal `User.id`, fixed role, and active/disabled state needed for future attribution, but intentionally adds no actor foreign keys to Phase 2 tables. Future attributed records use that internal identity and retain historical attribution even if the synthetic user is later deactivated or renamed. Inspection creation/completion attributes the inspector; manufacturing execution attributes the recording actor; action/rework history attributes the acting user; verification and disposition history attribute their decision actors. These links belong with the domain mutation services that can populate them atomically and add accountability without replacing or mutating the existing append-oriented event histories. Phase 3 must not prematurely implement the Phase 4–6 business workflows that create those records.
+Phase 3B provides the stable internal `User.id`, fixed role, and active/disabled state needed for attribution, but intentionally added no actor foreign keys to Phase 2 tables. Phase 5 inspection persistence retains the authenticated inspector through a restrictive user relationship; later deactivation, renaming, or role changes do not rewrite historical attribution. Manufacturing execution, action/rework, verification, and disposition actors remain with their future domain mutation services. Actor links add accountability without replacing or mutating append-oriented event histories.

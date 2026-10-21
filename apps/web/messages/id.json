@@ -178,6 +178,24 @@
       "search": "Cari",
       "clear": "Hapus"
     },
+    "samples": {
+      "summary": "Coba sampel fiktif",
+      "description": "Catatan portofolio pilihan ini menunjukkan riwayat ketertelusuran dan mutu yang berbeda.",
+      "behavior": "Memilih sampel hanya mengisi input kode lacak. Tinjau filter yang ada, lalu pilih Cari.",
+      "use": "Gunakan sampel {traceCode}: {scenario}",
+      "cleanPass": {
+        "title": "PASS bersih",
+        "description": "Genealogi terhubung, bukti proses selesai, dan inspeksi PASS."
+      },
+      "ngRetest": {
+        "title": "NG diikuti uji ulang PASS",
+        "description": "NG awal tetap tersimpan bersama koreksi, uji ulang, verifikasi, dan bukti PASS berikutnya."
+      },
+      "escalated": {
+        "title": "NC dieskalasi dan pengerjaan ulang",
+        "description": "Kasus abnormal, eskalasi, penggantian komponen, uji ulang, verifikasi, dan disposisi."
+      }
+    },
     "results": {
       "eyebrow": "Bukti tersimpan",
       "title": "Unit tertelusur",
@@ -375,6 +393,57 @@
       "retry": "Coba lagi"
     },
     "unitTypes": { "PACK": "PACK", "MODULE": "MODUL", "CELL": "SEL", "COMPONENT": "KOMPONEN", "MATERIAL": "MATERIAL" }
+  },
+  "InspectionEntry": {
+    "foundation": {
+      "title": "Fondasi entri inspeksi siap",
+      "description": "Kontrak API aman, status pemulihan, dan pelokalan telah disiapkan. Pemilihan unit dan spesifikasi akan diperkenalkan pada subfase berikutnya.",
+      "steps": { "unit": "Unit", "specification": "Spesifikasi", "evidence": "Bukti", "review": "Tinjau", "result": "Hasil" }
+    },
+    "unit": {
+      "title": "Konfirmasi unit tertelusur", "description": "Masukkan kode lacak publik yang tepat sebelum memilih spesifikasi inspeksi.", "traceCode": "Kode lacak", "confirm": "Konfirmasi unit", "loading": "Mencari unit tertelusur…", "help": "Gunakan 1–128 huruf, angka, tanda hubung, atau garis bawah. Input dinormalisasi menjadi huruf kapital.", "invalid": "Masukkan kode lacak yang valid.", "confirmed": "Unit dikonfirmasi", "unitType": "Jenis unit", "productModel": "Model produk", "notAssigned": "Tidak ditetapkan langsung", "historySummary": "Riwayat yang ada", "historyCounts": "{process} proses · {quality} mutu",
+      "errors": {
+        "notFound": { "title": "Unit tidak ditemukan", "description": "Tidak ada unit tertelusur yang cocok dengan kode tepat ini. Kode yang dimasukkan tetap dipertahankan." },
+        "forbidden": { "title": "Akses unit tidak tersedia", "description": "Peran terautentikasi Anda tidak dapat membaca unit ini." },
+        "network": { "title": "Tidak dapat menjangkau ketertelusuran", "description": "Periksa koneksi lalu coba unit ini lagi." },
+        "server": { "title": "Pencarian unit tidak tersedia", "description": "Layanan ketertelusuran tidak dapat menyelesaikan pencarian." },
+        "unexpected": { "title": "Respons unit tidak terduga", "description": "Respons tidak dapat ditampilkan dengan aman." }
+      }
+    },
+    "discovery": {
+      "title": "Spesifikasi terpublikasi yang cocok", "compatibility": "Spesifikasi terpublikasi ini cocok dengan jenis unit. Kompatibilitas unit, proses, rute, dan eksekusi akhir tetap ditentukan server saat pengiriman.", "search": "Kode atau nama", "resultType": "Jenis hasil", "allResultTypes": "Semua jenis hasil", "processCode": "Kode proses", "selectionLegend": "Pilih satu versi spesifikasi tepat", "loading": "Memuat spesifikasi terpublikasi yang cocok…", "empty": "Tidak ada spesifikasi terpublikasi yang cocok", "emptyDescription": "Sesuaikan filter opsional atau konfirmasi unit lain.", "page": "Halaman {page} dari {totalPages}", "paginationLabel": "Halaman penemuan spesifikasi",
+      "errors": {
+        "notFound": { "title": "Spesifikasi tidak tersedia", "description": "Tidak ada spesifikasi terpublikasi untuk permintaan ini." },
+        "forbidden": { "title": "Akses penemuan tidak tersedia", "description": "Peran Anda tidak dapat menemukan spesifikasi inspeksi." },
+        "network": { "title": "Tidak dapat menjangkau penemuan spesifikasi", "description": "Periksa koneksi lalu coba lagi." },
+        "server": { "title": "Penemuan spesifikasi tidak tersedia", "description": "Layanan tidak dapat menyelesaikan penemuan." },
+        "unexpected": { "title": "Respons penemuan tidak terduga", "description": "Respons tidak dapat ditampilkan dengan aman." }
+      }
+    },
+    "criteria": {
+      "title": "Kriteria inspeksi versi tepat", "serverAuthority": "Kriteria yang ditampilkan memandu entri bukti; backend tetap menentukan hasil akhir LULUS/NG.", "loading": "Memuat kriteria versi tepat…", "unavailable": "Versi spesifikasi tepat tidak tersedia", "identity": "Spesifikasi", "name": "Nama kanonis", "resultType": "Jenis hasil", "targetUnitType": "Jenis unit target", "process": "Proses", "routeStep": "Langkah rute", "step": "Langkah {order}", "notConfigured": "Tidak dikonfigurasi", "lowerBound": "Batas bawah", "upperBound": "Batas atas", "measurementUnit": "Satuan ukur", "acceptable": "Dikonfigurasi dapat diterima", "notAcceptable": "Dikonfigurasi tidak dapat diterima",
+      "numeric": { "title": "Kriteria penerimaan numerik", "inclusive": "Batas bawah dan atas yang dikonfigurasi bersifat inklusif." },
+      "boolean": { "title": "Kriteria penerimaan Boolean", "expected": "Pengamatan yang diharapkan: {value}" },
+      "categorical": { "title": "Opsi kategoris" },
+      "visual": { "title": "Opsi visual", "textOnly": "Pilih dari opsi tekstual terkonfigurasi ini nanti; unggah gambar tidak diperlukan." },
+      "text": { "title": "Bukti teks", "requirement": "Bukti teks memerlukan pengamatan tidak kosong dan hasil LULUS/NG eksplisit dari inspektor." },
+      "errors": { "notFound": "Versi terpublikasi tepat ini tidak lagi tersedia.", "forbidden": "Peran Anda tidak dapat membaca spesifikasi ini.", "network": "Layanan tidak dapat dijangkau.", "server": "Layanan tidak dapat memuat kriteria ini.", "unexpected": "Respons tidak dapat ditampilkan dengan aman." }
+    },
+    "execution": {
+      "title": "Eksekusi proses opsional", "description": "Tautkan eksekusi yang ada untuk unit ini hanya jika konteks proses publik dan rutenya cocok dengan spesifikasi terpilih.", "none": "Tidak ada eksekusi yang dipilih", "loading": "Memuat riwayat proses yang cocok…", "empty": "Tidak ada eksekusi yang cocok pada halaman riwayat yang dimuat.", "loadMore": "Muat riwayat proses lainnya", "processAttempt": "Percobaan proses {attempt}", "selectionLegend": "Pilih eksekusi proses opsional", "errorTitle": "Riwayat proses tidak tersedia",
+      "errors": { "notFound": "Tidak ada riwayat proses untuk unit ini.", "forbidden": "Peran Anda tidak dapat membaca riwayat proses.", "network": "Layanan tidak dapat dijangkau.", "server": "Layanan tidak dapat memuat riwayat proses.", "unexpected": "Respons tidak dapat ditampilkan dengan aman." }
+    },
+    "evidence": { "title": "Bukti inspeksi", "description": "Masukkan bukti untuk spesifikasi tepat yang dipilih. Halaman ini tidak menghitung hasil otoritatif.", "numeric": "Nilai terukur", "boolean": "Nilai teramati", "true": "Benar", "false": "Salah", "categorical": "Kategori terkonfigurasi", "visual": "Opsi visual terkonfigurasi", "text": "Bukti teks", "outcome": "Hasil TEXT dari inspektor", "pass": "LULUS", "ng": "NG", "characterCount": "{count} dari {maximum} karakter Unicode" },
+    "timestamp": { "label": "Waktu kejadian inspeksi", "help": "Masukkan waktu dinding lokal di {zone} sebagai DD/MM/YYYY, HH:mm. Tinjauan menampilkan serialisasi UTC eksplisit; server menerapkan batas waktu mendatang.", "invalid": "Masukkan tanggal dan waktu lengkap yang valid sebagai DD/MM/YYYY, HH:mm.", "utc": "Waktu kejadian (UTC)", "pickerOpen": "Pilih tanggal dan waktu", "pickerClose": "Tutup pemilih tanggal dan waktu", "pickerLegend": "Pilih tanggal dan waktu kejadian inspeksi", "pickerDay": "Hari", "pickerMonth": "Bulan", "pickerYear": "Tahun", "pickerHour": "Jam", "pickerMinute": "Menit", "pickerTime": "Waktu" },
+    "review": { "title": "Tinjau draf inspeksi", "description": "Konfirmasi draf yang belum dikirim ini. Validasi frontend tidak menjamin kompatibilitas atau penerimaan backend.", "prepare": "Tinjau draf inspeksi", "notSubmitted": "Hanya tinjauan · belum dikirim", "evidence": "Bukti", "noPrediction": "Tidak ada prediksi LULUS/NG untuk bukti ini. Backend tetap menjadi otoritas.", "textOutcomeInput": "Hasil TEXT dari inspektor: {outcome}. Ini adalah bukti input, bukan hasil yang dikonfirmasi server.", "noSubmit": "Perilaku pengiriman dan hasil otoritatif belum tersedia pada subfase ini.", "confirmation": "Pengiriman mengonfirmasi envelope publik yang telah ditinjau ini. Backend akan memvalidasi kompatibilitas dan menentukan hasil otoritatif." },
+    "validation": { "summary": "Tinjau bukti dan waktu kejadian yang ditandai sebelum melanjutkan.", "REQUIRED": "Bukti wajib diisi.", "INVALID_DECIMAL": "Gunakan string desimal biasa tanpa notasi eksponen atau spasi tambahan.", "DECIMAL_OUT_OF_RANGE": "Nilai harus sesuai DECIMAL(18,6), termasuk maksimal 12 digit bilangan bulat signifikan dan 6 digit pecahan.", "INVALID_OPTION": "Pilih opsi yang dimiliki versi spesifikasi tepat ini.", "TEXT_TOO_LONG": "Bukti teks maksimal 4.000 karakter Unicode.", "OUTCOME_REQUIRED": "Pilih LULUS atau NG untuk bukti TEXT.", "TYPE_MISMATCH": "Jenis bukti tidak lagi cocok dengan spesifikasi terpilih." },
+    "submission": { "pending": "Mengirim inspeksi…", "uncertain": "Hasil pengiriman belum pasti. Pulihkan atau batalkan secara eksplisit sebelum memulai pengiriman logis lain.", "retrySame": "Coba ulang pengiriman yang sama", "failedTitle": "Inspeksi tidak terkirim", "deterministicFailure": "Server mengembalikan kegagalan pasti. Bukti Anda tetap tersedia agar dapat ditinjau kembali." },
+    "result": { "title": "Hasil otoritatif", "attempt": "Percobaan inspeksi {attempt}", "attemptLabel": "Percobaan inspeksi", "createdAt": "Dicatat pada", "outcome": "Hasil terkonfirmasi", "confirmed": "Inspeksi terkonfirmasi server", "textDistinction": "Hasil TEXT yang dimasukkan inspektor: {input}. Hasil terkonfirmasi server: {confirmed}.", "history": "Lihat riwayat mutu", "another": "Inspeksi lagi" },
+    "errors": { "INVALID_REQUEST": "Tinjau permintaan inspeksi lalu coba lagi.", "INVALID_TYPED_RESULT": "Bukti tidak sesuai dengan spesifikasi yang dipilih.", "UNAUTHENTICATED": "Sesi Anda telah berakhir. Masuk kembali.", "FORBIDDEN": "Peran Anda tidak dapat mengirim inspeksi.", "TRACE_UNIT_NOT_FOUND": "Unit tertelusur tidak ditemukan.", "INSPECTION_SPECIFICATION_NOT_FOUND": "Versi spesifikasi tepat tidak ditemukan.", "INSPECTION_SPECIFICATION_NOT_PUBLISHED": "Versi spesifikasi tepat tidak lagi dipublikasikan.", "INCOMPATIBLE_INSPECTION_CONTEXT": "Konteks unit, spesifikasi, atau eksekusi tidak kompatibel.", "IDEMPOTENCY_CONFLICT": "Kunci pemulihan ini milik pengiriman logis yang berbeda.", "INSPECTION_WRITE_CONFLICT": "Inspeksi tidak dapat ditulis dengan aman. Coba ulang pengiriman yang sama.", "INSPECTION_PERSISTENCE_ERROR": "Layanan inspeksi tidak dapat menyimpan pengiriman.", "network": "Layanan tidak dapat dijangkau. Hasil pengiriman mungkin belum pasti.", "malformed": "Layanan mengonfirmasi keberhasilan dengan respons yang tidak dapat ditampilkan dengan aman. Hasil tetap tidak pasti; coba lagi dengan kunci pemulihan yang sama.", "recovery": "Penyimpanan pemulihan aman tidak tersedia. Inspeksi tidak dikirim.", "unexpected": "Permintaan inspeksi tidak dapat diselesaikan dengan aman." },
+    "actions": { "continue": "Lanjutkan", "back": "Kembali", "search": "Cari", "previous": "Sebelumnya", "next": "Berikutnya", "submit": "Kirim inspeksi", "retry": "Coba lagi", "recover": "Pulihkan pengiriman", "abandon": "Batalkan pengiriman tertunda", "returnToReview": "Kembali ke tinjauan", "cancel": "Batal" },
+    "recovery": { "title": "Pengiriman inspeksi belum terselesaikan", "description": "Pengiriman sebelumnya mungkin telah mencapai server. Coba ulang dengan kunci pemulihan yang sama atau batalkan secara eksplisit.", "expired": "Catatan pemulihan tersimpan tidak lagi tersedia.", "abandonWarning": "Pembatalan menghapus pemulihan lokal untuk permintaan yang belum terselesaikan ini. Tindakan ini tidak membuktikan bahwa server tidak mencatat inspeksi." },
+    "upcoming": { "title": "Alur entri inspeksi", "description": "Tinjau, kirim, pulihkan hasil yang tidak pasti, dan gunakan hasil terkonfirmasi server." },
+    "accessibility": { "workspaceLabel": "Entri inspeksi", "workflowLabel": "Tahapan entri inspeksi", "loading": "Data inspeksi sedang dimuat", "errorSummary": "Kesalahan formulir inspeksi", "resultAnnouncement": "Hasil inspeksi: {outcome}", "draftRestored": "Draf inspeksi yang belum dikirim dipulihkan setelah perubahan bahasa." }
   },
   "Auth": {
     "brand": {

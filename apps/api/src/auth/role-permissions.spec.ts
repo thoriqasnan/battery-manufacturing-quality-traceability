@@ -28,6 +28,7 @@ describe('Phase 3E role permission policy', () => {
       Permission.DashboardView,
       Permission.TraceabilityView,
       Permission.EngineeringActionPerform,
+      Permission.InspectionSpecificationManage,
     ],
   } as const;
 
@@ -48,6 +49,21 @@ describe('Phase 3E role permission policy', () => {
     expect(
       roleHasPermissions(UserRole.ADMIN, [Permission.InspectionWrite]),
     ).toBe(false);
+    expect(
+      roleHasPermissions(UserRole.ADMIN, [
+        Permission.InspectionSpecificationManage,
+      ]),
+    ).toBe(false);
+    expect(
+      roleHasPermissions(UserRole.QUALITY, [
+        Permission.InspectionSpecificationManage,
+      ]),
+    ).toBe(false);
+    expect(
+      roleHasPermissions(UserRole.ENGINEERING, [
+        Permission.InspectionSpecificationManage,
+      ]),
+    ).toBe(true);
   });
 
   it('requires every permission declared by a policy boundary', () => {

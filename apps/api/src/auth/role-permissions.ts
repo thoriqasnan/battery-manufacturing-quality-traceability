@@ -29,6 +29,7 @@ export const ROLE_PERMISSIONS = Object.freeze({
     Permission.DashboardView,
     Permission.TraceabilityView,
     Permission.EngineeringActionPerform,
+    Permission.InspectionSpecificationManage,
   ]),
 }) satisfies Readonly<Record<UserRole, readonly PermissionValue[]>>;
 

@@ -2,7 +2,7 @@
 
 **Phase:** 4A — Dashboard & Traceability UX / Read Contracts
 
-**Status:** Phase 4A–4J VERIFIED COMPLETE; overall Phase 4 VERIFIED COMPLETE; Phase 5 NEXT — NOT STARTED
+**Status:** Phase 4A–4J and overall Phase 4 VERIFIED COMPLETE; Phase 5 VERIFIED COMPLETE
 
 This document is the Phase 4 source of truth for dashboard and traceability read behavior. It is grounded in the current Prisma schema, Phase 2 traceability queries and deterministic synthetic seed. It defines contracts; it does not add controllers, production endpoints, DTOs, queries, or UI implementation.
 
@@ -51,6 +51,8 @@ The initial responsive composition is:
 - pack count by product model.
 
 The implemented Overview displays the server generation time and “all records” inspection scope. It shows no percentages, trends, yield, throughput, targets, forecasts or production-volume claims. A returned zero remains visible evidence; an unavailable quality aggregate renders an explicit unavailable message rather than zero.
+
+From/to filtering is an approved future event/analytics requirement but is not part of the Phase 5 critical path. Its preferred contract uses timezone-qualified absolute `from` and `to` instants with half-open `[from, to)` semantics. Shared presets and dashboard analytics filtering primarily belong to the later analytics phase unless measured Phase 5 evidence requires earlier history filtering. This event-range contract must not replace or overload genealogy Current, Historical evidence, or As-of semantics.
 
 ### B. Traceability search
 
@@ -470,7 +472,7 @@ Phase 4J confirmed that the editor value is browser-local wall-clock time, not a
 
 Final investigation also found that the installed PostgreSQL adapter emits timezone-less Date parameters. Every project-owned Prisma connection now starts its PostgreSQL session in UTC through the shared adapter factory. The deterministic seed reconciled the explicit UTC fixture instants without reset or manual patching, and a database-side epoch regression proves `2026-01-11T08:00:00Z` persists as epoch `1768118400` across upsert/update. API timestamps retain qualified absolute-time semantics, while as-of continues to use inclusive installation and exclusive removal boundaries.
 
-Final browser acceptance passed the English integrated journey; genealogy URL/scope and Back/Forward restoration; Arabic RTL locale remount with exact NC disclosure-state preservation and related-unit navigation; responsive, keyboard-visible, and privacy sanity checks; and the corrected as-of scenarios above. No automated screen-reader validation is claimed. Final backend/frontend regression, all nine seed-integrity checks, public portfolio review, and source-of-truth reconciliation passed. Phase 4A through 4J and overall Phase 4 are **VERIFIED COMPLETE**; Phase 5 is next and not started.
+Final browser acceptance passed the English integrated journey; genealogy URL/scope and Back/Forward restoration; Arabic RTL locale remount with exact NC disclosure-state preservation and related-unit navigation; responsive, keyboard-visible, and privacy sanity checks; and the corrected as-of scenarios above. No automated screen-reader validation is claimed. Final backend/frontend regression, all nine seed-integrity checks, public portfolio review, and source-of-truth reconciliation passed. Phase 4A through 4J and overall Phase 4 are **VERIFIED COMPLETE**. Phase 5 subsequently implemented and verified quality persistence, inspection entry, reconciled history, synthetic reviewer support, and its final Phase 5H closure.
 
 Final automated verification passed 64 focused Phase 4G/search/shell/route tests, all 96 frontend regression tests, TypeScript, ESLint, the webpack production build, and `git diff --check`. Manual Safari acceptance passed current/historical/as-of evidence including the deterministic component replacement, related-unit traversal, nonexistent-unit recovery through search, `DD/MM/YYYY, HH:mm` editing and chooser behavior, URL/history and viewport preservation, quick-search validation, English/Indonesian/fallback presentation, Arabic RTL, and the 375×812 responsive layout.
 

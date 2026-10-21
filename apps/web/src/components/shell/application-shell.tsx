@@ -6,6 +6,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { OverviewDashboard } from "@/components/dashboard/overview-dashboard";
 import { TraceabilitySearch } from "@/components/traceability/traceability-search";
 import { TraceabilityDetail } from "@/components/traceability/traceability-detail";
+import { InspectionWorkspaceFoundation } from "@/components/inspection/inspection-workspace-foundation";
 import type { AuthenticatedIdentity } from "@/lib/api/auth";
 import { roleHasAnyPermission } from "@/lib/auth/permissions";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -14,6 +15,7 @@ import { PageLayout } from "./page-layout";
 
 type ApplicationShellProps = {
   user: AuthenticatedIdentity;
+  csrfToken: string;
   error?: string;
   isLoggingOut: boolean;
   onLogout: () => Promise<void>;
@@ -33,7 +35,7 @@ function decodedPathSegment(value: string): string {
   }
 }
 
-export function ApplicationShell({ user, error, isLoggingOut, onLogout, onSessionInvalid = () => undefined }: ApplicationShellProps) {
+export function ApplicationShell({ user, csrfToken, error, isLoggingOut, onLogout, onSessionInvalid = () => undefined }: ApplicationShellProps) {
   const t = useTranslations("Shell");
   const pathname = normalizedPath(usePathname());
   const [menuOpen, setMenuOpen] = useState(false);
@@ -197,6 +199,8 @@ export function ApplicationShell({ user, error, isLoggingOut, onLogout, onSessio
             <TraceabilitySearch onUnauthenticated={onSessionInvalid} />
           ) : !isUnavailable && currentItem.key === "traceability" && selectedTraceCode !== null ? (
             <TraceabilityDetail key={selectedTraceCode} rawTraceCode={selectedTraceCode} onUnauthenticated={onSessionInvalid} />
+          ) : !isUnavailable && currentItem.key === "inspections" ? (
+            <InspectionWorkspaceFoundation onUnauthenticated={onSessionInvalid} accountUserId={user.id} csrfToken={csrfToken} />
           ) : <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8" aria-labelledby="workspace-state-title">
             <div className="flex max-w-3xl gap-4">
               <span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700" aria-hidden="true">◇</span>

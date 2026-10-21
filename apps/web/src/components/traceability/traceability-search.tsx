@@ -15,6 +15,11 @@ import { isValidTraceCode, normalizeTraceCodeInput, normalizeTraceCodeSubmission
 
 const PRODUCT_MODEL_PATTERN = /^[A-Z0-9_-]{1,64}$/;
 const PAGE_SIZE = 25;
+const REVIEWER_SAMPLES = [
+  { key: "cleanPass", traceCode: "PACK-DEMO-ALPHA-PASS" },
+  { key: "ngRetest", traceCode: "PACK-DEMO-ALPHA-RETEST" },
+  { key: "escalated", traceCode: "PACK-DEMO-BETA-ESCALATED" },
+] as const;
 
 type Criteria = {
   query: string;
@@ -158,6 +163,11 @@ export function TraceabilitySearch({ onUnauthenticated }: { onUnauthenticated: (
     applyCriteria(next);
   }
 
+  function selectSample(traceCode: string) {
+    setQuery(traceCode);
+    setQueryError(false);
+  }
+
   const hasFormCriteria = Boolean(query || unitType || productModel);
 
   return (
@@ -193,6 +203,32 @@ export function TraceabilitySearch({ onUnauthenticated }: { onUnauthenticated: (
               <button type="button" onClick={clear} disabled={!hasFormCriteria} className="min-h-12 flex-1 rounded-lg border border-white/25 px-5 font-semibold text-white outline-none hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-45 xl:flex-none">{t("form.clear")}</button>
             </div>
           </form>
+
+          <details className="mt-4 rounded-lg border border-white/15 bg-white/[0.06] open:bg-white/[0.08]">
+            <summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold text-blue-100 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-300">
+              <span dir="auto">{t("samples.summary")}</span>
+            </summary>
+            <div className="border-t border-white/15 px-4 py-4">
+              <p dir="auto" className="text-sm leading-6 text-slate-300">{t("samples.description")}</p>
+              <ul className="mt-3 grid min-w-0 gap-2 lg:grid-cols-3">
+                {REVIEWER_SAMPLES.map((sample) => (
+                  <li key={sample.traceCode} className="min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => selectSample(sample.traceCode)}
+                      aria-label={t("samples.use", { traceCode: sample.traceCode, scenario: t(`samples.${sample.key}.title`) })}
+                      className="min-h-11 w-full min-w-0 rounded-lg border border-white/20 bg-[#102946] px-3 py-3 text-start outline-none hover:border-blue-300 hover:bg-[#15365c] focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a1b31]"
+                    >
+                      <span dir="auto" className="block text-sm font-semibold text-white">{t(`samples.${sample.key}.title`)}</span>
+                      <SampleTraceCode value={sample.traceCode} />
+                      <span dir="auto" className="mt-1 block text-xs leading-5 text-slate-300">{t(`samples.${sample.key}.description`)}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <p dir="auto" className="mt-3 text-xs leading-5 text-slate-400">{t("samples.behavior")}</p>
+            </div>
+          </details>
         </div>
       </section>
 
@@ -253,6 +289,17 @@ export function TraceabilitySearch({ onUnauthenticated }: { onUnauthenticated: (
         </section>
       )}
     </div>
+  );
+}
+
+function SampleTraceCode({ value }: { value: string }) {
+  const segments = value.split("-");
+  return (
+    <bdi dir="ltr" aria-label={value} className="mt-1 block max-w-full break-words font-mono text-xs font-bold text-blue-200 [word-break:normal]">
+      {segments.map((segment, index) => (
+        <span key={`${index}:${segment}`}>{segment}{index < segments.length - 1 ? <>-<wbr /></> : null}</span>
+      ))}
+    </bdi>
   );
 }
 

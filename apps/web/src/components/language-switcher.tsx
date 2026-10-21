@@ -5,6 +5,7 @@ import { ChangeEvent, useLayoutEffect, useTransition } from "react";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { AppLocale, localeRegistry } from "@/i18n/routing";
 import { prepareTraceabilityDisclosureLocaleHandoff } from "@/lib/traceability-disclosure-state";
+import { prepareInspectionLocaleHandoff } from "@/lib/inspection-locale-handoff";
 
 type PendingLocaleScroll = {
   href: string;
@@ -84,6 +85,7 @@ export function LanguageSwitcher() {
       y: window.scrollY,
     };
     prepareTraceabilityDisclosureLocaleHandoff();
+    prepareInspectionLocaleHandoff();
 
     startTransition(() => {
       router.replace(href, { locale: nextLocale, scroll: false });

@@ -19,6 +19,7 @@ export function AuthGateway() {
   return (
     <ApplicationShell
       user={state.session.user}
+      csrfToken={state.session.csrfToken}
       error={state.error}
       isLoggingOut={isSubmitting}
       onLogout={logout}

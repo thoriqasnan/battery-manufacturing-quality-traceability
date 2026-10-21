@@ -41,6 +41,12 @@ enum InspectionOutcome {
   NG
 }
 
+enum InspectionSpecificationLifecycle {
+  DRAFT
+  PUBLISHED
+  RETIRED
+}
+
 enum NonconformanceStatus {
   OPEN
   IN_PROGRESS
@@ -72,14 +78,16 @@ enum UserRole {
 }
 
 model User {
-  id           String    @id @default(uuid()) @db.Uuid
-  username     String    @unique @db.VarChar(64)
-  passwordHash String    @db.VarChar(255)
-  role         UserRole
-  isActive     Boolean   @default(true)
-  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
-  updatedAt    DateTime  @updatedAt @db.Timestamptz(3)
-  sessions     Session[]
+  id                    String                 @id @default(uuid()) @db.Uuid
+  username              String                 @unique @db.VarChar(64)
+  passwordHash          String                 @db.VarChar(255)
+  role                  UserRole
+  isActive              Boolean                @default(true)
+  createdAt             DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime               @updatedAt @db.Timestamptz(3)
+  sessions              Session[]
+  recordedInspections   Inspection[]           @relation("InspectionInspector")
+  inspectionSubmissions InspectionSubmission[]
 
   @@index([role, isActive])
 }
@@ -222,24 +230,24 @@ model ProcessExecution {
 }
 
 model InspectionSpecification {
-  id                   String                          @id @default(uuid()) @db.Uuid
-  code                 String                          @db.VarChar(64)
+  id                   String                           @id @default(uuid()) @db.Uuid
+  code                 String                           @db.VarChar(64)
   version              Int
-  name                 String                          @db.VarChar(160)
+  name                 String                           @db.VarChar(160)
   description          String?
   resultType           InspectionResultType
   targetUnitType       TraceableUnitType
-  processDefinitionId  String                          @db.Uuid
-  processRouteStepId   String?                         @db.Uuid
-  lowerBound           Decimal?                        @db.Decimal(18, 6)
-  upperBound           Decimal?                        @db.Decimal(18, 6)
-  unitCode             String?                         @db.VarChar(32)
+  processDefinitionId  String                           @db.Uuid
+  processRouteStepId   String?                          @db.Uuid
+  lowerBound           Decimal?                         @db.Decimal(18, 6)
+  upperBound           Decimal?                         @db.Decimal(18, 6)
+  unitCode             String?                          @db.VarChar(32)
   expectedBooleanValue Boolean?
-  isActive             Boolean                         @default(true)
-  createdAt            DateTime                        @default(now()) @db.Timestamptz(3)
-  updatedAt            DateTime                        @updatedAt @db.Timestamptz(3)
-  processDefinition    ProcessDefinition               @relation(fields: [processDefinitionId], references: [id], onDelete: Restrict)
-  processRouteStep     ProcessRouteStep?               @relation(fields: [processRouteStepId, processDefinitionId], references: [id, processDefinitionId], onDelete: Restrict)
+  lifecycle            InspectionSpecificationLifecycle @default(DRAFT)
+  createdAt            DateTime                         @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime                         @updatedAt @db.Timestamptz(3)
+  processDefinition    ProcessDefinition                @relation(fields: [processDefinitionId], references: [id], onDelete: Restrict)
+  processRouteStep     ProcessRouteStep?                @relation(fields: [processRouteStepId, processDefinitionId], references: [id, processDefinitionId], onDelete: Restrict)
   options              InspectionSpecificationOption[]
   inspections          Inspection[]
 
@@ -247,8 +255,8 @@ model InspectionSpecification {
   @@unique([id, resultType])
   @@unique([id, resultType, targetUnitType])
   @@unique([id, resultType, targetUnitType, processDefinitionId])
-  @@index([processDefinitionId, isActive])
-  @@index([processRouteStepId, isActive])
+  @@index([processDefinitionId, lifecycle])
+  @@index([processRouteStepId, lifecycle])
 }
 
 model InspectionSpecificationOption {
@@ -273,6 +281,7 @@ model Inspection {
   specificationId       String                  @db.Uuid
   processDefinitionId   String                  @db.Uuid
   processExecutionId    String?                 @db.Uuid
+  inspectorUserId       String?                 @db.Uuid
   resultType            InspectionResultType
   targetUnitType        TraceableUnitType
   attemptNumber         Int
@@ -283,7 +292,9 @@ model Inspection {
   traceableUnit         TraceableUnit           @relation(fields: [traceableUnitId, targetUnitType], references: [id, unitType], onDelete: Restrict)
   specification         InspectionSpecification @relation(fields: [specificationId, resultType, targetUnitType, processDefinitionId], references: [id, resultType, targetUnitType, processDefinitionId], onDelete: Restrict)
   processExecution      ProcessExecution?       @relation(fields: [processExecutionId, traceableUnitId, processDefinitionId], references: [id, traceableUnitId, processDefinitionId], onDelete: Restrict)
+  inspector             User?                   @relation("InspectionInspector", fields: [inspectorUserId], references: [id], onDelete: Restrict)
   result                InspectionResult?
+  submission            InspectionSubmission?
   sourceNonconformances Nonconformance[]        @relation("NonconformanceSourceInspection")
   actionResults         ActionHistory[]         @relation("ActionResultInspection")
   verifications         Verification[]          @relation("VerificationInspection")
@@ -294,7 +305,26 @@ model Inspection {
   @@index([traceableUnitId, inspectedAt])
   @@index([specificationId, inspectedAt])
   @@index([processExecutionId, inspectedAt])
+  @@index([inspectorUserId])
   @@index([outcome, inspectedAt])
+}
+
+model InspectionSubmission {
+  id                      String     @id @default(uuid()) @db.Uuid
+  userId                  String     @db.Uuid
+  operation               String     @db.VarChar(64)
+  operationVersion        Int
+  idempotencyKey          String     @db.VarChar(128)
+  requestFingerprint      String     @db.Char(64)
+  inspectionId            String     @unique @db.Uuid
+  responseContractVersion Int
+  responseStatus          Int        @db.SmallInt
+  createdAt               DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime   @updatedAt @db.Timestamptz(3)
+  user                    User       @relation(fields: [userId], references: [id], onDelete: Restrict)
+  inspection              Inspection @relation(fields: [inspectionId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, operation, operationVersion, idempotencyKey], map: "InspectionSubmission_scope_key")
 }
 
 model InspectionResult {

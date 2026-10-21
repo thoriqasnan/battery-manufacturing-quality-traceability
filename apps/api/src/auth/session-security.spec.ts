@@ -1,6 +1,8 @@
 import { CsrfService } from './csrf.service.js';
 import {
   buildSessionCookieOptions,
+  clearSessionCookie,
+  SESSION_COOKIE_NAME,
   SESSION_LIFETIME_MS,
 } from './session-cookie.js';
 import {
@@ -60,5 +62,36 @@ describe('session transport security primitives', () => {
     });
     expect(options.maxAge).toBeGreaterThan(0);
     expect(options).not.toHaveProperty('domain');
+  });
+
+  it('uses a non-secure local cookie and clears it with matching scope', () => {
+    const expires = new Date(Date.now() + SESSION_LIFETIME_MS);
+    const options = buildSessionCookieOptions('development', expires);
+    const clearCookie = vi.fn();
+    const originalEnvironment = process.env.NODE_ENV;
+
+    expect(options).toMatchObject({
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/',
+      expires,
+    });
+    expect(options).not.toHaveProperty('domain');
+
+    process.env.NODE_ENV = 'production';
+    try {
+      clearSessionCookie({ clearCookie } as never);
+    } finally {
+      if (originalEnvironment === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = originalEnvironment;
+    }
+
+    expect(clearCookie).toHaveBeenCalledWith(SESSION_COOKIE_NAME, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+    });
   });
 });

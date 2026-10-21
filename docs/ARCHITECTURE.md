@@ -1,6 +1,6 @@
 # Technical Architecture
 
-This document records validated technical direction and current foundation evidence. Phases 1, 2, 3, and 4 are verified complete following automated regression and their required manual acceptance. Phase 3 implements authentication and authorization contracts, user/role persistence, Argon2id credential verification, server-managed session transport, backend RBAC enforcement, frontend authentication, the role-aware application shell, and security/integration hardening. Phase 4 implements the authenticated dashboard and integrated responsive traceability investigation across identity, genealogy, Process, Quality, and Nonconformance evidence, including final browser, accessibility, RTL, privacy, and absolute-time boundary acceptance. Phase 5 is next and not started.
+This document records validated technical direction and current foundation evidence. Phases 1 through 5 are verified complete following automated regression and their required manual acceptance. Phase 3 implements authentication and authorization contracts, user/role persistence, Argon2id credential verification, server-managed session transport, backend RBAC enforcement, frontend authentication, the role-aware application shell, and security/integration hardening. Phase 4 implements the authenticated dashboard and integrated responsive traceability investigation across identity, genealogy, Process, Quality, and Nonconformance evidence, including final browser, accessibility, RTL, privacy, and absolute-time boundary acceptance. Phase 5 implements versioned quality specifications, atomic inspection entry, reconciled histories, deterministic synthetic reviewer data, and final guarded security/database/documentation reconciliation.
 
 ## System shape
 
@@ -137,7 +137,7 @@ Phase 3C adds no controller or externally reachable login endpoint, session reco
 
 `SessionTokenService` generates 32 random bytes with the operating-system cryptographic source and encodes them as opaque base64url. NestJS sends the raw value only in the session cookie and stores only its SHA-256 hexadecimal digest for exact lookup. Password hashing is intentionally not used for high-entropy random session identifiers. The absolute session lifetime is eight hours; access does not extend it. Unknown, expired, revoked, or inactive-user sessions resolve to the same `UNAUTHENTICATED` boundary.
 
-The host-only `bmqt_session` cookie has `HttpOnly`, `SameSite=Lax`, `Path=/`, expiry and Max-Age matching the server row, and `Secure` when `NODE_ENV=production`. No `Domain` attribute is set. Exact-origin credentialed CORS permits `GET`, `POST`, `OPTIONS`, content headers, and `X-CSRF-Token`; `FRONTEND_ORIGIN` remains the single configured browser origin.
+The host-only `bmqt_session` cookie has `HttpOnly`, `SameSite=Lax`, `Path=/`, expiry and Max-Age matching the server row, and `Secure` when `NODE_ENV=production`. No `Domain` attribute is set. Exact-origin credentialed CORS permits `GET`, `POST`, `OPTIONS`, content headers, `X-CSRF-Token`, and the inspection submission `Idempotency-Key`; `FRONTEND_ORIGIN` remains the single configured browser origin. A browser-realistic OPTIONS regression test covers the inspection submission preflight contract.
 
 The HTTP contract is now implemented:
 
@@ -207,7 +207,7 @@ User-operated browser acceptance passed invalid and valid login, password visibi
 
 The App Router favicon is an original opaque deep-navy BQ mark stored as a conventional ICO with 16, 32, and 48 pixel images. Its structure, metadata integration, `image/x-icon` response, source-response equivalence, production-build inclusion, and direct Safari rendering passed. Safari tabs on the localhost origin continued to display Safari's generated/cached “L” glyph even though the repository and emitted metadata contain no such asset. This is recorded as non-blocking local-origin browser behavior; tab rendering must be rechecked on the eventual deployment domain.
 
-Phase 3A through Phase 3I are verified complete. The security model remains bounded to the verified application behavior: HSTS after confirmed HTTPS termination, a stricter deployment-aware CSP, shared/edge rate limiting for multiple instances, trusted-proxy review, compatible upstream fixes for deferred Prisma tooling advisories, and deployment-origin favicon verification remain future production checks. Phase 4A through Phase 4J and overall Phase 4 are verified complete; Phase 5 is next and not started.
+Phase 3A through Phase 3I, Phase 4A through Phase 4J, and overall Phase 5 are verified complete. Phase 5H closes final regression, security/database safety, documentation, and accumulated-change reconciliation without adding production behavior. The security model remains bounded to verified application behavior: HSTS after confirmed HTTPS termination, a stricter deployment-aware CSP, shared/edge rate limiting for multiple instances, trusted-proxy review, compatible upstream fixes for deferred Prisma tooling advisories, and deployment-origin favicon verification remain future production checks.
 
 ## Data architecture
 
@@ -360,10 +360,32 @@ Phase 4I completes responsive/accessibility integration without changing backend
 
 Manual acceptance exposed one additional integration defect: Unit Detail Quick Search also activated a capped prose column beside a fixed 36rem form at `lg`. Revision 1 moves that coordinated horizontal composition to `xl` while retaining the accepted heading/copy typography, mobile stacking, validation, uppercase normalization, navigation, and bidi isolation. English intermediate and wide-desktop layouts and Arabic intermediate and wide-desktop RTL layouts passed re-acceptance. The existing labelled native controls, landmark/heading structure, focus-visible treatment, mobile-drawer focus containment/restoration, alerts/statuses, segmented date/time keyboard behavior, and native NC disclosures remain intact. Phase 4I does not claim automated screen-reader validation; final broad browser, assistive-technology, and privacy acceptance remains Phase 4J.
 
+## Phase 5 quality inspection architecture
+
+Phase 5A discovery and Phase 5H-0 inventory are complete and reviewed. Phase 5B through Phase 5G, Phase 5H-1, Phase 5H-2, and overall Phase 5 are verified complete; the authoritative quality contract is [`QUALITY_INSPECTION.md`](QUALITY_INSPECTION.md). Phase 5 production behavior includes versioned specifications, atomic inspection entry, the accepted QUALITY frontend experience, reconciled cross-layer history, deterministic public synthetic data, measured MEDIUM evidence, and accepted reviewer guidance.
+
+The design preserves default-deny RBAC and separates duties: the explicit `inspection-specification:manage` permission now belongs to `ENGINEERING`, while `QUALITY` retains `inspection:write`; `ADMIN` has no implicit bypass. Specification versions persist `DRAFT`, `PUBLISHED`, or `RETIRED`; services will later enforce the forward-only transitions. Inspections bind to one exact `(code, version)` row and one typed result, with nullable restrictive inspector attribution for legacy compatibility and mandatory attribution reserved for future Phase 5 writes.
+
+Phase 5B-2 adds migration `20261006000000_phase_5b2_quality_persistence`. It replaces specification `isActive` with lifecycle and backfills reference specifications to `PUBLISHED`; adds the restrictive inspector relationship; and adds `InspectionSubmission` for durable user/operation/version/key-scoped idempotency metadata. It changes no controller, application service, public endpoint, or UI. Migration, seed idempotence, persistence/RBAC regression, all nine traceability integrity checks, no-drift verification, and UTC epoch evidence passed.
+
+Numeric, Boolean, categorical, and visual outcomes are server-computed from the exact published version. Text requires an explicit inspector-submitted PASS/NG because arbitrary prose is not an acceptance rule. A future inspection write is one transaction with durable idempotency, unit/exact-version attempt serialization through a transaction-scoped PostgreSQL advisory lock, and append-only NG/retest history. No NG automatically creates a nonconformance in Phase 5.
+
+Phase 5G adds a separate deterministic large-data generator without replacing the small reference seed and is verified complete. The representative MEDIUM measurement did not justify a speculative index or production-query change. Event `from`/`to` ranges remain approved but deferred from the Phase 5 critical path and remain distinct from genealogy As-of semantics.
+
+Phase 5G-2B reuses the Phase 2B graph without adding a schema concept: generated PACKs parent MODULEs, and MODULEs parent CELLs, COMPONENTs, and MATERIALs. Exact deterministic row and edge ownership, namespace-scoped transactional locking, bounded preflight/writes, partial recovery, conflict refusal, and edge-first cleanup are enforced only in the isolated test database. Process and quality histories remain later generator layers.
+
+Phase 5G-2C owns a separate four-definition/four-step route for each generated product namespace rather than sharing or modifying the reference process configuration. Deterministic PACK execution attempts use existing COMPLETED status, execution methods, nullable route-step context, attempt uniqueness, and timestamp contracts. Process completion remains neutral lifecycle evidence and never implies an inspection outcome.
+
+Phase 5G-2D layers generator-owned, published five-type inspection specifications and immutable inspection/result/submission aggregates onto the generated VERIFY process. It invokes the same parser, canonical fingerprint, and evaluation utilities as the write API, retains exact specification versions and attempt history, supports linked or null process context, and never infers an NC from NG. Exact-plan cleanup removes quality dependencies before process and genealogy data and refuses unexpected historical dependants.
+
+Phase 5G-2E adds only existing NC-domain records on explicitly selected generated NG histories. Source inspection/execution identity, abnormal cases, ordered correction/REWORK/retest actions, resulting PASS inspections, verifications, dispositions, and lifecycle timestamps are exact-plan owned. Other NG histories remain NC-free. Cleanup removes the verified lifecycle graph before its immutable quality and process sources and refuses unexpected dependants.
+
+Phase 5G-3 verifies the exact 2,000-pack MEDIUM profile at 139,671 persisted rows and measures the supported application reads before any optimization. The temporary plan is removed through the same exact-fingerprint cleanup, leaving zero generator anchors and reference integrity 9/9. Phase 5G-4 adds only the accepted authenticated Traceability Search sample selector for three stable `DEMO_*` stories. Phase 5G-5 revalidates generator, guarded persistence, history, HTTP, frontend, static-analysis, build, ownership, and privacy contracts without changing production architecture. Overall Phase 5G is verified complete; LARGE persistence, custom MEDIUM persistence, speculative indexes, anonymous reviewer access, and generated-identifier publication remain intentionally unsupported.
+
 ### Development configuration contract
 
 - PostgreSQL is the development relational database.
-- The future API connection uses `DATABASE_URL` with the shape `postgresql://USER:PASSWORD@HOST:PORT/DATABASE`.
+- The API connection uses `DATABASE_URL` with the shape `postgresql://USER:PASSWORD@HOST:PORT/DATABASE`.
 - `apps/api/.env.example` contains synthetic placeholders and remains trackable; real `.env` variants are ignored.
 - Development database and role names must be project-specific and non-sensitive.
 - Production credentials must never be committed or reused for local development.

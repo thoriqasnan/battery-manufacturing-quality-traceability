@@ -3,6 +3,7 @@ export const Permission = {
   TraceabilityView: 'traceability:view',
   ManufacturingRecord: 'manufacturing:record',
   InspectionWrite: 'inspection:write',
+  InspectionSpecificationManage: 'inspection-specification:manage',
   NonconformanceCreate: 'nonconformance:create',
   NonconformanceUpdate: 'nonconformance:update',
   EngineeringActionPerform: 'engineering-action:perform',

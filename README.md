@@ -17,13 +17,37 @@ An independent public portfolio application that will simulate battery-manufactu
 | 0E Domain/Data Architecture  | VALIDATED |
 | 0F Technical Architecture    | VALIDATED |
 
-**Status:** Phase 3 — Authentication & RBAC (**VERIFIED COMPLETE**).
+**Earlier checkpoint:** Phase 3 — Authentication & RBAC (**VERIFIED COMPLETE**).
 
 Phase 1A through Phase 1F are **VERIFIED COMPLETE**. Automated regression and final manual acceptance passed for the frontend, backend, local PostgreSQL and Prisma connectivity, internationalization and RTL behavior, responsive layout, full-stack health integration, unavailable-backend handling, and recovery without a page refresh.
 
 Phase 2A through Phase 2H are **VERIFIED COMPLETE**. The final manual acceptance confirmed the five applied migrations with no drift, deterministic idempotent seeding, forward/reverse and current/historical traceability, replacement/process/quality/nonconformance histories, all nine integrity checks, 10 focused traceability tests, and the complete Phase 2 regression.
 
-**Current:** Phase 3 — Authentication & RBAC and Phase 4 — Manufacturing Dashboard & Traceability are **VERIFIED COMPLETE**. Phase 4 final acceptance passed the integrated Overview → Search → Unit Detail → Genealogy → Process/Quality/Nonconformance journey, browser history, responsive English and Arabic RTL behavior, keyboard-visible interaction, public-data/privacy checks, and corrected point-in-time replacement evidence. Phase 5 — Quality Inspection System is **NEXT / NOT STARTED**.
+**Current:** Phase 3 — Authentication & RBAC, Phase 4 — Manufacturing Dashboard & Traceability, and Phase 5 — Quality Inspection System are **VERIFIED COMPLETE**. Phase 5 closure includes accepted inspection-entry and reviewer Safari evidence, guarded final regression, database/reference integrity, security review, and documentation/change-inventory reconciliation. Phase 6 — Nonconformance & Rework is the next documented roadmap phase and remains planned / not started.
+
+## Local quick start
+
+With PostgreSQL 17 and the ignored local environment files already configured, use separate terminals:
+
+```bash
+# PostgreSQL readiness
+brew services list
+pg_isready -h localhost -p 5432
+```
+
+```bash
+# API terminal
+cd apps/api
+node --env-file=.env ./node_modules/.bin/nest start --watch
+```
+
+```bash
+# Frontend terminal
+cd apps/web
+npm run dev
+```
+
+Verify `curl -i http://localhost:3001/health`, then open [http://localhost:3000/en](http://localhost:3000/en). The API command loads `apps/api/.env` explicitly; merely creating that file does not make Nest load it. See [Local Development and Manual Testing](docs/LOCAL_DEVELOPMENT_AND_TESTING.md) for first-time setup, safe database checks, fictional acceptance accounts, reviewer samples, troubleshooting, and the Safari checklist.
 
 ## Planned MVP
 
@@ -60,7 +84,9 @@ PLC and machine integration, real MES integration, supplier portals, IoT streami
 - [Product definition](docs/PRODUCT.md)
 - [Domain model and workflows](docs/DOMAIN.md)
 - [Technical architecture](docs/ARCHITECTURE.md)
+- [Quality inspection architecture and contracts](docs/QUALITY_INSPECTION.md)
 - [Security and synthetic-data boundary](docs/SECURITY_AND_SYNTHETIC_DATA.md)
+- [Local development and manual testing](docs/LOCAL_DEVELOPMENT_AND_TESTING.md)
 - [Implementation roadmap](ROADMAP.md)
 
 ## Learning goals

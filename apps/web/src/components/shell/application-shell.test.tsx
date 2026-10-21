@@ -36,6 +36,7 @@ function renderShell(role: UserRole, locale = "en") {
       <NextIntlClientProvider locale={locale} messages={locale === "id" ? indonesianMessages : englishMessages}>
         <ApplicationShell
           user={{ id: "server-user-id", username: "synthetic.user", role, isActive: true }}
+          csrfToken="csrf-test-token"
           isLoggingOut={false}
           onLogout={vi.fn().mockResolvedValue(undefined)}
         />
@@ -94,13 +95,26 @@ describe("role-aware application shell", () => {
     rerender(
       <div data-testid="locale-root" dir="ltr">
         <NextIntlClientProvider locale="en" messages={englishMessages}>
-          <ApplicationShell user={{ id: "server-user-id", username: "synthetic.user", role: "ENGINEERING", isActive: true }} isLoggingOut={false} onLogout={vi.fn().mockResolvedValue(undefined)} />
+          <ApplicationShell user={{ id: "server-user-id", username: "synthetic.user", role: "ENGINEERING", isActive: true }} csrfToken="csrf-test-token" isLoggingOut={false} onLogout={vi.fn().mockResolvedValue(undefined)} />
         </NextIntlClientProvider>
       </div>,
     );
     expect(screen.getByRole("heading", { level: 1, name: "Traceability" })).toBeVisible();
     expect(screen.getByText("Unit detail PACK-DEMO-ALPHA-PASS")).toBeVisible();
     expect(within(desktopNavigation()).getByRole("link", { name: "Traceability" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("renders the minimal inspection foundation only for the QUALITY workspace", () => {
+    testPathname = "/inspections";
+    const quality = renderShell("QUALITY");
+    expect(screen.getByRole("heading", { level: 1, name: "Inspections" })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: "Confirm a traceable unit" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Authoritative result" })).not.toBeInTheDocument();
+
+    quality.unmount();
+    renderShell("ENGINEERING");
+    expect(screen.getByRole("heading", { level: 1, name: "Workspace unavailable" })).toBeVisible();
+    expect(screen.queryByText("Confirm a traceable unit")).not.toBeInTheDocument();
   });
 
   it("keeps the nested unit detail route in the localized Indonesian shell", () => {
@@ -213,7 +227,7 @@ describe("role-aware application shell", () => {
     const onLogout = vi.fn().mockResolvedValue(undefined);
     render(
       <NextIntlClientProvider locale="en" messages={englishMessages}>
-        <ApplicationShell user={{ id: "private-user-uuid", username: "safe.user", role: "ADMIN", isActive: true }} isLoggingOut={false} onLogout={onLogout} />
+        <ApplicationShell user={{ id: "private-user-uuid", username: "safe.user", role: "ADMIN", isActive: true }} csrfToken="csrf-test-token" isLoggingOut={false} onLogout={onLogout} />
       </NextIntlClientProvider>,
     );
     await userEvent.click(screen.getByRole("button", { name: "Sign out" }));

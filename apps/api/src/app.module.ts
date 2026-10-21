@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
 import { TraceabilityModule } from './traceability/traceability.module.js';
 import { SecurityHeadersMiddleware } from './config/security-headers.middleware.js';
 import { DashboardModule } from './dashboard/dashboard.module.js';
+import { InspectionSpecificationModule } from './quality/inspection-specification.module.js';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { DashboardModule } from './dashboard/dashboard.module.js';
     PrismaModule,
     TraceabilityModule,
     DashboardModule,
+    InspectionSpecificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
